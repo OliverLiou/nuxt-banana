@@ -6,13 +6,13 @@
       @click="handleImageClick"
     >
       <img 
-        :src="post.image" 
-        :alt="post.title"
+        :src="item.image_url" 
+        :alt="item.title"
         class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
       />
       <!-- 圖片右上角時間戳記 -->
       <div class="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-        {{ post.timestamp }}
+        {{ item.created_at }}
       </div>
     </div>
 
@@ -20,13 +20,13 @@
     <div class="p-4 space-y-3">
       <!-- 標題 -->
       <h3 class="text-base font-medium text-gray-900 dark:text-gray-100">
-        {{ post.title }}
+        {{ item.title }}
       </h3>
 
       <!-- Badge 標籤列表 -->
       <div class="flex flex-wrap gap-2">
         <UBadge
-          v-for="(badge, index) in post.badges"
+          v-for="(badge, index) in item.badges"
           :key="index"
           :label="badge.label"
           :color="badge.color"
@@ -39,8 +39,8 @@
 </template>
 
 <script setup lang="ts">
-const { post } = defineProps<{
- post: Post
+const { item } = defineProps<{
+ item: GalleryItem
 }>()
 
 const emit = defineEmits<{
@@ -50,8 +50,8 @@ const emit = defineEmits<{
 // 處理圖片點擊事件
 const handleImageClick = () => {
   emit('click-image', { 
-    image: post.image, 
-    title: post.title 
+    image: item.image_url, 
+    title: item.title 
   })
 }
 </script>

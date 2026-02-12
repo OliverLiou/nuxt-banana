@@ -1,14 +1,15 @@
+import type { BadgeProps } from '#ui/types'
+type BadgeColor = BadgeProps['color']
+
 declare global { 
-  interface Badge {
-    label: string
-    color?: 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
-  }
-  interface Post {
-    id?: number
-    image: string
+  interface GalleryItem { 
+    id: number
+    image_url: string
     title: string
-    timestamp: string
-    badges: Badge[]
+    prompt: string
+    badges: { label: string, color: BadgeColor } []
+    created_at: timestamp
+    isActive: boolean
   }
 }
 export  {}
