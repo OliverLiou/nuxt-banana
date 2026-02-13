@@ -1,25 +1,45 @@
 <template>
-  <div>
-    <button @click="signInWithOtp">
-      Sign In with E-Mail
-    </button>
-    <input
-      v-model="email"
-      type="email"
-    />
+  <div class="flex flex-col items-center justify-center gap-4 p-4 min-h-screen">
+    <UPageCard class="w-full max-w-sm bg-gray-50">
+      <UAuthForm
+        title="歡迎回來!"
+        description="請從下方選擇登入方式"
+        icon="i-lucide-user"
+        :providers="providers"
+      />
+    </UPageCard>
   </div>
 </template>
 
 <script setup lang="ts">
-const supabase = useSupabaseClient()
-const email = ref('')
+import type { ButtonProps } from '@nuxt/ui'
 
-const signInWithOtp = async () => {
-  const { error } = await supabase.auth.signInWithOtp({
-    email: email.value,
+const supabase = useSupabaseClient()
+const user = useSupabaseUser()
+
+const providers = ref<ButtonProps[]>([
+  {
+    label: '使用 Google 登入',
+    icon: 'logos:google-icon',
+    color: 'neutral',
+    variant: 'outline',
+    onClick: () => signInWithGoogle(),
+  }
+])
+
+watch(user, () => {
+  if (user.value) {
+    // Redirect to protected page
+    return navigateTo('/')
+  }
+})
+
+const signInWithGoogle = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
     options: {
-      emailRedirectTo: 'http://localhost:3000/confirm',
-    }
+      redirectTo: '/confirm',
+    },
   })
   if (error) console.log(error)
 }
