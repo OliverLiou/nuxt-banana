@@ -1,0 +1,42 @@
+## 展示畫廊頁面 (前台)
+- **版面與載入實作**
+  - 使用 `UScrollArea` Component 實作滾動範圍。利用響應式設計，當畫面 breakpoint 為 `md` 以上時，`orientation` 屬性設為 `vertical`，否則為 `horizontal`。
+  - 圖片列表資料來源：從 `galleryStore` 取得 `items` 狀態。**注意：Store 在撈取或 computed 處理時，需確保僅回傳 `isActive === true` 的項目，並依 `created_at` 降冪 (DESC) 排序**。
+  - 當 `items` 陣列為空時，需渲染一個空狀態元件提示使用者目前無資料。
+- **單筆項目展示 (`UBlogPost`)**
+  - 圖片展示搭配 `UBlogPost` Component 實作，屬性映射如下：
+    - `title` → 綁定 `title`
+    - `image` → 綁定 `image_url` (需設定 `@error` 事件處理圖片失效時的 Fallback Image)
+    - `date` → 綁定 `created_at` (格式化為 YYYY-MM-DD)
+    - `description` → 綁定 `prompt`
+  - 標籤渲染：透過 `UBlogPost` 的 `#badge` slot 搭配 `v-for` 渲染 `GalleryItem` 中的 `badges` 陣列，使用 `UBadge` 元件，`variant` 設為 `outline`，並將 `color` 屬性綁定至資料中的顏色值。其餘未指定的屬性請勿使用。
+- **互動功能**
+  - 在 `UBlogPost` 的 `footer` slot 區塊實作「複製提示詞」按鈕。
+  - 按鈕使用 `UButton` Component。點擊後將 `prompt` 內容寫入剪貼簿，並透過 `useToast()` 觸發 Toast 提示訊息告知使用者「複製成功」。
+
+---
+
+## 管理者頁面 (後台)
+- **整體架構與列表**
+  - 列表檢視使用 `UTable` Component 實作，欄位渲染邏輯定義於 `columns` 屬性中。
+  - 列表上方提供「新增」`UButton` 按鈕，點擊後開啟 `USlideover`，並初始化空白的表單狀態供使用者填寫。
+  - 新增與編輯介面統一透過 `USlideover` 搭配 `UForm` Component 實作。**採用 UForm 的自訂驗證 (Custom Validation) 函式進行表單檢驗，驗證規則依據表單狀態區分如下：**
+    - **新增模式 (Create)**：確保 `upload_image`、`title`、`prompt` 欄位具備有效值（不得為空），且 `badges` 陣列長度必須大於 0。
+    - **編輯模式 (Edit)**：確保 `image_url`、`title`、`prompt` 欄位具備有效值（不得為空），且 `badges` 陣列長度必須大於 0。
+- **UTable Columns 定義**
+  - `image_url` (圖片): 渲染圖片縮圖 (若無圖片顯示 Placeholder)。
+  - `title` (標題): 直接顯示文字。
+  - `prompt` (提示詞): 直接顯示文字 (可套用 truncate 避免破版)。
+  - `created_at` (建立日期): 顯示 YYYY-MM-DD 格式，不可編輯。
+  - **`isActive` (是否啟用)**: 顯示目前的啟用狀態。使用 `USwitch` Component，`disabled` 設為 `false`。綁定 `@change` 事件，當開關切換時，直接呼叫 Supabase API 更新該筆狀態，並跳出 Toast 提示更新結果。
+  - `badges` (標籤設定): 使用 `v-for` 搭配 `UBadge` Component 顯示該項目的所有標籤。
+  - `actions` (操作): 提供「編輯」`UButton`，點擊後將該筆資料帶入並彈出 `USlideover`；提供「刪除」按鈕，點擊需彈出確認視窗 (或使用原生 confirm)，確認後呼叫刪除 API。
+- **UForm Fields 表單定義**
+  - **`image_url` (圖片)**: 當欄位有值時顯示圖片預覽畫面；若無值則顯示 `UFileUpload` 元件供使用者上傳圖片，並以 `upload_image` 屬性綁定 `v-model`。**表單送出 (Submit) 邏輯**：送出時需先觸發 Supabase Storage API 進行圖片上傳。若成功取得返回的 Public URL，再將其寫入資料庫的 `image_url` 欄位並完成後續動作；**若上傳失敗或無法順利取得 Public URL，則必須立即中斷表單送出流程（判定為 Submit 失敗），並透過 Toast 顯示錯誤提示訊息告知使用者。**
+  - `title` (標題): 預設為null，使用 `UInput` Component，以 `title` 屬性綁定 `v-model`。
+  - `prompt` (提示詞): 預設為null，使用 `UTextarea` Component，以 `prompt` 屬性綁定 `v-model`。
+  - `isActive` (是否啟用): 預設為true，使用 `USwitch` Component，以 `isActive` 屬性綁定 `v-model`。
+  - `badges` (標籤設定): 
+    - 預設為空陣列
+    - 顯示目前已設定的標籤列表 (可使用精簡版 `UTable` 或列表)，每個標籤後方提供「刪除」`UButton`。
+    - 提供新增區塊：使用 `UInput` 輸入 `label`，使用 `USelect` 選擇 `color` (由SelectProps from '#ui/types' 提供)。點擊「加入」後，將新物件 Push 至表單狀態的 `badges` 陣列中。
