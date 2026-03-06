@@ -110,7 +110,7 @@ Client-side reactive type used for the admin create/edit form (`USlideover` + `U
 
 | Field | Type | Required (Create) | Required (Edit) | Default | Notes |
 |---|---|---|---|---|---|
-| `id` | `number \| null` | — | Present | `null` | `null` = create mode; number = edit mode |
+| `id` | `number \| undefined` | — | Present | `undefined` | `undefined` = create mode; number = edit mode |
 | `title` | `string` | ✅ | ✅ | `''` | Bound to `UInput` via `v-model` |
 | `image_url` | `string` | — | ✅ | `''` | Populated from existing record in edit mode |
 | `upload_image` | `File \| null` | ✅ | — | `null` | New image file selected via `UFileUpload` |
@@ -256,7 +256,7 @@ interface Badge {
 
 /** Reactive form state for admin create/edit USlideover */
 interface GalleryFormState {
-  id: number | null
+  id?: number
   title: string
   image_url: string
   upload_image: File | null
@@ -266,9 +266,9 @@ interface GalleryFormState {
 }
 
 /** Factory for empty create-mode form state */
-function createEmptyFormState(): GalleryFormState {
+function getDefaultFormState(): GalleryFormState {
   return {
-    id: null,
+    id: undefined,
     title: '',
     image_url: '',
     upload_image: null,
@@ -279,7 +279,7 @@ function createEmptyFormState(): GalleryFormState {
 }
 
 /** Factory to populate form state from an existing GalleryItem (edit mode) */
-function createEditFormState(item: GalleryItem): GalleryFormState {
+function getEditFormState(item: GalleryItem): GalleryFormState {
   return {
     id: item.id,
     title: item.title,
