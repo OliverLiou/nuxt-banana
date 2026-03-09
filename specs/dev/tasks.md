@@ -25,9 +25,9 @@
 
 **Purpose**: Project initialization, type definitions, and static assets
 
-- [ ] T001 Add placeholder fallback image for broken image URLs in `public/placeholder.png`
-- [ ] T002 [P] Extend global type definitions with `Badge`, `GalleryFormState`, and `BadgeColor` types in `shared/types/index.d.ts` — fix existing `created_at: timestamp` to `created_at: string`, add `Badge` interface (`{ label: string; color: BadgeColor }`), add `GalleryFormState` interface (`{ id?: number; title: string | null; image_url: string | null; upload_image: File | null; prompt: string | null; badges: Badge[]; isActive: boolean }`), add `getDefaultFormState()` factory function type
-- [ ] T003 [P] Create admin pages directory structure at `app/pages/admin/`
+- [X] T001 Add placeholder fallback image for broken image URLs in `public/placeholder.png`
+- [X] T002 [P] Extend global type definitions with `Badge`, `GalleryFormState`, and `BadgeColor` types in `shared/types/index.d.ts` — fix existing `created_at: timestamp` to `created_at: string`, add `Badge` interface (`{ label: string; color: BadgeColor }`), add `GalleryFormState` interface (`{ id?: number; title: string | null; image_url: string | null; upload_image: File | null; prompt: string | null; badges: Badge[]; isActive: boolean }`), add `getDefaultFormState()` factory function type
+- [X] T003 [P] Create admin pages directory structure at `app/pages/admin/`
 
 ---
 
@@ -37,9 +37,9 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Extend Pinia gallery store with pagination state, admin state, form/slideover state, and all actions per store contract in `app/stores/galleryStore.ts` — add `page`, `hasMore`, `allItems`, `adminPending`, `adminError`, `slideoverOpen`, `editingId`, `formState`, `isEditMode` computed; add actions: `appendItems`, `setPage`, `setHasMore`, `resetPagination`, `setAllItems`, `setAdminPending`, `setAdminError`, `addItem`, `updateItemInList`, `removeItem`, `openCreate`, `openEdit`, `closeSlideover`, `resetForm`; preserve existing `setItems`, `setPending`, `setError`
-- [ ] T005 Rewrite `useGallery` composable to replace mock data with real Supabase queries and infinite scroll pagination in `app/composables/useGallery.ts` — implement `loadMore()` with `.range(from, to)` pagination, `refresh()` for reset, `hasMore` computed, guard against duplicate calls, initial auto-load on mount, toast on error; return `{ items, pending, error, hasMore, loadMore, refresh }`
-- [ ] T006 [P] Create `useGalleryAdmin` composable with full CRUD operations in `app/composables/useGalleryAdmin.ts` — implement `fetchAll()`, `submitForm()` (create/update with image upload), `toggleActive()`, `deleteItem()` (with storage cleanup), `uploadImage()`, `openCreate()`, `openEdit()`, `closeSlideover()`, `validate()` (custom UForm validation with create/edit mode detection); use toast notifications per contract error table; return all state refs and action functions
+- [X] T004 Extend Pinia gallery store with pagination state, admin state, form/slideover state, and all actions per store contract in `app/stores/galleryStore.ts` — add `page`, `hasMore`, `allItems`, `adminPending`, `adminError`, `slideoverOpen`, `editingId`, `formState`, `isEditMode` computed; add actions: `appendItems`, `setPage`, `setHasMore`, `resetPagination`, `setAllItems`, `setAdminPending`, `setAdminError`, `addItem`, `updateItemInList`, `removeItem`, `openCreate`, `openEdit`, `closeSlideover`, `resetForm`; preserve existing `setItems`, `setPending`, `setError`
+- [X] T005 Rewrite `useGallery` composable to replace mock data with real Supabase queries and infinite scroll pagination in `app/composables/useGallery.ts` — implement `loadMore()` with `.range(from, to)` pagination, `refresh()` for reset, `hasMore` computed, guard against duplicate calls, initial auto-load on mount, toast on error; return `{ items, pending, error, hasMore, loadMore, refresh }`
+- [X] T006 [P] Create `useGalleryAdmin` composable with full CRUD operations in `app/composables/useGalleryAdmin.ts` — implement `fetchAll()`, `submitForm()` (create/update with image upload), `toggleActive()`, `deleteItem()` (with storage cleanup), `uploadImage()`, `openCreate()`, `openEdit()`, `closeSlideover()`, `validate()` (custom UForm validation with create/edit mode detection); use toast notifications per contract error table; return all state refs and action functions
 
 **Checkpoint**: Foundation ready — store extended, composables wired to Supabase, user story implementation can now begin
 
@@ -53,7 +53,7 @@
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Create public gallery page in `app/pages/gallery.vue` — implement `UScrollArea` with responsive orientation (vertical on md+, horizontal on mobile via `useBreakpoints`), render `UBlogPost` cards mapping `GalleryItem` fields (`title`, `prompt` as description, `image_url` as image, `created_at` as formatted date, badges via `#badge` slot with `UBadge`), wire `useInfiniteScroll` from VueUse to `loadMore()` targeting ScrollArea viewport element `[data-reka-scroll-area-viewport]`, show loading skeleton during fetch, show empty state message "目前尚無公開的展示作品" when no items, handle image load errors with fallback placeholder, add `loading="lazy"` to all `<img>` elements for performance
+- [X] T007 [US1] Create public gallery page in `app/pages/gallery.vue` — implement `UScrollArea` with responsive orientation (vertical on md+, horizontal on mobile via `useBreakpoints`), render `UBlogPost` cards mapping `GalleryItem` fields (`title`, `prompt` as description, `image_url` as image, `created_at` as formatted date, badges via `#badge` slot with `UBadge`), wire `useInfiniteScroll` from VueUse to `loadMore()` targeting ScrollArea viewport element `[data-reka-scroll-area-viewport]`, show loading skeleton during fetch, show empty state message "目前尚無公開的展示作品" when no items, handle image load errors with fallback placeholder, add `loading="lazy"` to all `<img>` elements for performance
 
 **Checkpoint**: User Story 1 complete — public gallery page shows active items with infinite scroll
 
@@ -67,8 +67,8 @@
 
 ### Implementation for User Story 2
 
-- [ ] T008 [P] [US2] Create `GalleryDetail` modal component in `app/components/GalleryDetail.vue` — accept `item: GalleryItem` and `open: boolean` (v-model) props; use `UModal` to display full-resolution image (`image_url` with error fallback), title, all badges via `UBadge` with label and color, formatted creation date, full prompt text in scrollable container for long text; handle image error with placeholder fallback
-- [ ] T009 [US2] Integrate `GalleryDetail` modal into gallery page in `app/pages/gallery.vue` — add `selectedItem` ref, bind `@click` on each `UBlogPost` card to set `selectedItem` and open modal, pass `selectedItem` to `GalleryDetail` component, ensure scroll position is preserved on modal close
+- [X] T008 [P] [US2] Create `GalleryDetail` modal component in `app/components/GalleryDetail.vue` — accept `item: GalleryItem` and `open: boolean` (v-model) props; use `UModal` to display full-resolution image (`image_url` with error fallback), title, all badges via `UBadge` with label and color, formatted creation date, full prompt text in scrollable container for long text; handle image error with placeholder fallback
+- [X] T009 [US2] Integrate `GalleryDetail` modal into gallery page in `app/pages/gallery.vue` — add `selectedItem` ref, bind `@click` on each `UBlogPost` card to set `selectedItem` and open modal, pass `selectedItem` to `GalleryDetail` component, ensure scroll position is preserved on modal close
 
 **Checkpoint**: User Stories 1 AND 2 complete — gallery browsing with detail view modal working
 
@@ -82,7 +82,7 @@
 
 ### Implementation for User Story 4
 
-- [ ] T010 [US4] Create admin gallery management page in `app/pages/admin/gallery.vue` — implement `UTable` with TanStack `ColumnDef<GalleryItem>[]` columns: image thumbnail (64x64 with error fallback and `loading="lazy"`), title, truncated prompt (max 48 chars), formatted date, `USwitch` for isActive toggle (with loading state via `togglingId` ref), badges via `UBadge` in flex container, actions column with edit and delete `UButton`s; call `fetchAll()` on mount; show loading state; add "新增項目" button with `i-lucide-plus` icon to open create slideover; wire `toggleActive()` from `useGalleryAdmin` to USwitch `onUpdate:modelValue`; when toggling isActive to `false` (停用), show `UModal` confirmation dialog "確定要停用此項目嗎？停用後將從公開畫廊隱藏。" before executing toggle — activation (啟用) does not require confirmation
+- [X] T010 [US4] Create admin gallery management page in `app/pages/admin/gallery.vue` — implement `UTable` with TanStack `ColumnDef<GalleryItem>[]` columns: image thumbnail (64x64 with error fallback and `loading="lazy"`), title, truncated prompt (max 48 chars), formatted date, `USwitch` for isActive toggle (with loading state via `togglingId` ref), badges via `UBadge` in flex container, actions column with edit and delete `UButton`s; call `fetchAll()` on mount; show loading state; add "新增項目" button with `i-lucide-plus` icon to open create slideover; wire `toggleActive()` from `useGalleryAdmin` to USwitch `onUpdate:modelValue`; when toggling isActive to `false` (停用), show `UModal` confirmation dialog "確定要停用此項目嗎？停用後將從公開畫廊隱藏。" before executing toggle — activation (啟用) does not require confirmation
 
 **Checkpoint**: User Story 4 complete — admin can view all items and toggle status
 
@@ -96,9 +96,9 @@
 
 ### Implementation for User Story 5
 
-- [ ] T011 [P] [US5] Create `GalleryForm` component in `app/components/GalleryForm.vue` — implement `UForm` with custom `validate` prop (create/edit mode-aware validation per contract); fields: image section (show preview if `image_url` exists with "重新上傳" button, else show `UFileUpload` with `accept="image/*"` and 5MB limit), title `UInput`, prompt `UTextarea`, isActive `USwitch`, badge management UI (inline list of existing badges with remove button per badge, add-badge row with label `UInput` + color `USelect` from `BadgeColor` palette + add `UButton`, enforce max 10 badges and unique labels with duplicate warning); emit `submit` event; accept `formState`, `isEditMode`, `validate` as props
-- [ ] T012 [US5] Integrate `GalleryForm` into `USlideover` in admin page `app/pages/admin/gallery.vue` — add `USlideover` with `v-model:open="slideoverOpen"`, dynamic title ("新增項目" / "編輯項目" based on `isEditMode`), `#body` slot containing `GalleryForm`, `#footer` slot with cancel button and submit button (with loading state); wire "新增項目" button to `openCreate()`, table edit buttons to `openEdit(item)`, form submit to `submitForm()` from `useGalleryAdmin`; refresh table after successful create/edit
-- [ ] T012b [US5] Add unsaved-changes navigation guard to admin gallery page in `app/pages/admin/gallery.vue` — track form dirty state (compare current `formState` against initial snapshot), use `onBeforeRouteLeave` to show confirmation dialog "您有未儲存的變更，確定要離開嗎？" when slideover is open with unsaved changes, prevent accidental navigation away from form (FR-017)
+- [X] T011 [P] [US5] Create `GalleryForm` component in `app/components/GalleryForm.vue` — implement `UForm` with custom `validate` prop (create/edit mode-aware validation per contract); fields: image section (show preview if `image_url` exists with "重新上傳" button, else show `UFileUpload` with `accept="image/*"` and 5MB limit), title `UInput`, prompt `UTextarea`, isActive `USwitch`, badge management UI (inline list of existing badges with remove button per badge, add-badge row with label `UInput` + color `USelect` from `BadgeColor` palette + add `UButton`, enforce max 10 badges and unique labels with duplicate warning); emit `submit` event; accept `formState`, `isEditMode`, `validate` as props
+- [X] T012 [US5] Integrate `GalleryForm` into `USlideover` in admin page `app/pages/admin/gallery.vue` — add `USlideover` with `v-model:open="slideoverOpen"`, dynamic title ("新增項目" / "編輯項目" based on `isEditMode`), `#body` slot containing `GalleryForm`, `#footer` slot with cancel button and submit button (with loading state); wire "新增項目" button to `openCreate()`, table edit buttons to `openEdit(item)`, form submit to `submitForm()` from `useGalleryAdmin`; refresh table after successful create/edit
+- [X] T012b [US5] Add unsaved-changes navigation guard to admin gallery page in `app/pages/admin/gallery.vue` — track form dirty state (compare current `formState` against initial snapshot), use `onBeforeRouteLeave` to show confirmation dialog "您有未儲存的變更，確定要離開嗎？" when slideover is open with unsaved changes, prevent accidental navigation away from form (FR-017)
 
 **Checkpoint**: User Stories 1, 2, 4, AND 5 complete — full CRUD except delete, public gallery and admin management functional
 
@@ -112,8 +112,8 @@
 
 ### Implementation for User Story 3
 
-- [ ] T013 [P] [US3] Add copy prompt button to `GalleryDetail` modal in `app/components/GalleryDetail.vue` — add `UButton` with `icon="i-lucide-copy"`, `label="複製提示詞"`, `variant="ghost"` that calls `navigator.clipboard.writeText(item.prompt)` with success toast "複製成功" via `useToast()`; handle clipboard API failure gracefully
-- [ ] T014 [P] [US3] Add copy prompt button to gallery card footer in `app/pages/gallery.vue` — use `UBlogPost` `#footer` slot to add copy prompt `UButton` with same clipboard + toast pattern; prevent click event from bubbling to card click (detail modal open)
+- [X] T013 [P] [US3] Add copy prompt button to `GalleryDetail` modal in `app/components/GalleryDetail.vue` — add `UButton` with `icon="i-lucide-copy"`, `label="複製提示詞"`, `variant="ghost"` that calls `navigator.clipboard.writeText(item.prompt)` with success toast "複製成功" via `useToast()`; handle clipboard API failure gracefully
+- [X] T014 [P] [US3] Add copy prompt button to gallery card footer in `app/pages/gallery.vue` — use `UBlogPost` `#footer` slot to add copy prompt `UButton` with same clipboard + toast pattern; prevent click event from bubbling to card click (detail modal open)
 
 **Checkpoint**: User Story 3 complete — prompt copying works from both detail view and gallery cards
 
@@ -127,7 +127,7 @@
 
 ### Implementation for User Story 6
 
-- [ ] T015 [US6] Add delete confirmation and execution to admin page in `app/pages/admin/gallery.vue` — add `UModal` confirmation dialog with warning text "此操作無法復原，確定要刪除此項目嗎？", confirm and cancel buttons; wire table delete button to show confirmation dialog, confirm button to call `deleteItem(item)` from `useGalleryAdmin` (handles storage cleanup + database delete + toast), refresh table on success; handle delete failure with error toast and item preservation
+- [X] T015 [US6] Add delete confirmation and execution to admin page in `app/pages/admin/gallery.vue` — add `UModal` confirmation dialog with warning text "此操作無法復原，確定要刪除此項目嗎？", confirm and cancel buttons; wire table delete button to show confirmation dialog, confirm button to call `deleteItem(item)` from `useGalleryAdmin` (handles storage cleanup + database delete + toast), refresh table on success; handle delete failure with error toast and item preservation
 
 **Checkpoint**: All user stories complete — full gallery management system functional
 
@@ -137,9 +137,9 @@
 
 **Purpose**: Edge cases, error handling, and quality improvements that affect multiple user stories
 
-- [ ] T016 [P] Ensure image error fallback handling works consistently across all views — verify `public/placeholder.png` is used in gallery cards (`app/pages/gallery.vue`), detail modal (`app/components/GalleryDetail.vue`), and admin table thumbnails (`app/pages/admin/gallery.vue`) via `@error` handler on `<img>` elements
-- [ ] T017 [P] Handle edge cases for long prompts, special characters, and Unicode in `app/components/GalleryDetail.vue` and `app/pages/gallery.vue` — ensure prompt text container is scrollable for very long text, special characters render correctly, copy preserves exact content; in `GalleryDetail.vue`, handle case where selected item is deleted by another admin while modal is open (show "此項目已不存在" message and close modal gracefully)
-- [ ] T018 Validate against quickstart.md constitution compliance checklist — verify brownfield preservation (no existing files broken), dependency lock (no new packages), UI-first (@nuxt/ui components used), TypeScript strict (no `any` types), auto-imports (no manual imports for Nuxt composables), component standards (PascalCase, template→script→style order), Pinia setup stores, no test files, toast feedback on all CRUD operations
+- [X] T016 [P] Ensure image error fallback handling works consistently across all views — verify `public/placeholder.png` is used in gallery cards (`app/pages/gallery.vue`), detail modal (`app/components/GalleryDetail.vue`), and admin table thumbnails (`app/pages/admin/gallery.vue`) via `@error` handler on `<img>` elements
+- [X] T017 [P] Handle edge cases for long prompts, special characters, and Unicode in `app/components/GalleryDetail.vue` and `app/pages/gallery.vue` — ensure prompt text container is scrollable for very long text, special characters render correctly, copy preserves exact content; in `GalleryDetail.vue`, handle case where selected item is deleted by another admin while modal is open (show "此項目已不存在" message and close modal gracefully)
+- [X] T018 Validate against quickstart.md constitution compliance checklist — verify brownfield preservation (no existing files broken), dependency lock (no new packages), UI-first (@nuxt/ui components used), TypeScript strict (no `any` types), auto-imports (no manual imports for Nuxt composables), component standards (PascalCase, template→script→style order), Pinia setup stores, no test files, toast feedback on all CRUD operations
 
 ---
 
