@@ -134,7 +134,7 @@ Work through these in sequence. P1 features first, then P2.
 
 **Step 2: Public gallery page** — `app/pages/gallery.vue`
 - `UScrollArea` with responsive orientation (`vertical` on md+, `horizontal` on mobile)
-- `UBlogPost` cards mapping GalleryItem fields (title, prompt as description, image_url, created_at, badges via `#badge` slot)
+- `UBlogPost` cards mapping GalleryItem fields (title, image_url; badges via `#badge` slot; icon-only copy/detail buttons via `#footer` slot)
 - Empty state when no active items
 - Infinite scroll using VueUse `useInfiniteScroll` + Supabase `.range()`
 
@@ -148,6 +148,7 @@ Work through these in sequence. P1 features first, then P2.
 - `UTable` with TanStack `ColumnDef` columns (image thumbnail, title, prompt truncated, date, isActive toggle via `USwitch`, badges, action buttons)
 - "Add New" button to open `USlideover`
 - Inline `USwitch` status toggle with Supabase update + toast
+- **Auth guard**: Use `definePageMeta()` with `role: 'admin'`. If the user doesn't have the admin role, redirect to home with toast message `'您無此頁面權限, 即將為您導回首頁'`
 
 **Step 5: Admin form** — `app/components/GalleryForm.vue`
 - `USlideover` containing `UForm` with custom validation function
@@ -242,11 +243,7 @@ function validate(state: Partial<GalleryFormState>): FormError[] {
 ```vue
 <UBlogPost
   :title="item.title"
-  :description="item.prompt"
-  :date="formatDate(item.created_at)"
   :image="item.image_url"
-  orientation="vertical"
-  variant="outline"
 >
   <template #badge>
     <UBadge
@@ -260,10 +257,15 @@ function validate(state: Partial<GalleryFormState>): FormError[] {
   <template #footer>
     <UButton
       icon="i-lucide-copy"
-      label="複製提示詞"
-      variant="ghost"
-      size="sm"
+      variant="outline"
+      color="neutral"
       @click="copyPrompt(item.prompt)"
+    />
+    <UButton
+      icon="i-lucide-eye"
+      variant="outline"
+      color="neutral"
+      @click="openDetail(item)"
     />
   </template>
 </UBlogPost>
@@ -281,27 +283,53 @@ const columns: ColumnDef<GalleryItem>[] = [
   {
     accessorKey: 'image_url',
     header: '圖片',
-    cell: ({ row }) => h('img', {
-      src: row.original.image_url,
-      class: 'w-16 h-16 object-cover rounded',
-      onError: (e: Event) => {
-        (e.target as HTMLImageElement).src = '/placeholder.png'
-      }
-    })
+    cell: ({ row }) => row.original.image_url
+      ? h('img', {
+          src: row.original.image_url,
+          class: 'w-16 h-16 object-cover rounded',
+        })
+      : h('span', { class: 'text-sm text-(--ui-text-muted)' }, '尚未設定圖片')
   },
   {
     accessorKey: 'isActive',
     header: '啟用',
     cell: ({ row }) => h(resolveComponent('USwitch'), {
       modelValue: row.original.isActive,
-      'onUpdate:modelValue': (val: boolean) => toggleActive(row.original.id, val)
+      disabled: true
     })
+  },
+  {
+    id: 'actions',
+    header: '操作',
+    cell: ({ row }) => h('div', { class: 'flex gap-2' }, [
+      h(resolveComponent('UButton'), {
+        icon: 'lucide:edit',
+        variant: 'outline',
+        color: 'neutral',
+        onClick: () => openEdit(row.original)
+      }),
+      h(resolveComponent('UButton'), {
+        icon: 'lucide:trash',
+        variant: 'outline',
+        color: 'error',
+        onClick: () => confirmDelete(row.original.id)
+      })
+    ])
   },
   // ... see research.md R-003 for full column definitions
 ]
 ```
 
 ### Image Upload to Supabase Storage
+
+```ts
+// File selection via useFileUpload (webp only, 2 MB max)
+const { files: uploadFiles, open, reset } = useFileUpload({
+  accept: 'image/webp',
+  maxFiles: 1,
+  maxSize: 2 * 1024 * 1024, // 2 MB
+})
+```
 
 ```ts
 async function uploadImage(file: File): Promise<string | null> {
@@ -382,7 +410,7 @@ export const useGalleryStore = defineStore('gallery', () => {
     items.value.unshift(item)
   }
 
-  function removeItem(id: number) {
+  function removeItem(id: string) {
     items.value = items.value.filter(i => i.id !== id)
   }
 
@@ -407,7 +435,8 @@ Run through this before every commit:
 - [ ] **Block order**: Every `.vue` file follows template → script → style
 - [ ] **Toast feedback**: All CRUD operations show success/error notifications
 - [ ] **Form validation**: Custom validation function handles create vs. edit mode correctly
-- [ ] **Error handling**: Image load failures show fallback, API errors display toast
+- [ ] **Error handling**: Image empty/missing shows '尚未設定圖片' text fallback, API errors display toast
+- [ ] **ID type**: All `id` fields use UUID (`string`), never `number`
 
 ---
 

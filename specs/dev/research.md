@@ -33,22 +33,18 @@
 
 ## R-002: @nuxt/ui UBlogPost — Gallery Item Card
 
-- **Decision**: Use `UBlogPost` to render each gallery item in the public gallery. Map GalleryItem fields to UBlogPost props and use `#badge` slot for rendering multiple badges and `#footer` slot for the copy-prompt button.
-- **Rationale**: `UBlogPost` provides a structured card with image, title, description, date, badge, and footer slots — an exact match for the gallery item display requirements.
-- **Alternatives considered**: Custom card component with `UCard` — rejected because `UBlogPost` already provides image handling, date display, and proper slot architecture for badges and footer out of the box.
+- **Decision**: Use `UBlogPost` to render each gallery item in the public gallery. Only use `title` and `image` props — do not use `description`, `date`, `variant`, `orientation`, or other unspecified props (其餘未指定的屬性請勿使用). Use `#badge` slot for rendering multiple badges and `#footer` slot for icon-only action buttons.
+- **Rationale**: `UBlogPost` provides a structured card with image, title, badge, and footer slots. Keeping prop usage minimal ensures forward compatibility and matches the confirmed plan.
+- **Alternatives considered**: Custom card component with `UCard` — rejected because `UBlogPost` already provides image handling and proper slot architecture for badges and footer out of the box.
 - **Key API details**:
-  - **Props**: `title` (string), `description` (string), `date` (string), `badge` (BadgeProps object), `image` (string or ImageProps), `authors` (array of User objects), `variant` (`'outline' | 'soft' | 'subtle' | 'ghost' | 'naked'`), `orientation` (`'vertical' | 'horizontal'`). Also accepts all Link props (`to`, `target`, etc.).
-  - **Slots**: `#badge` — custom badge rendering area (replaces the single `badge` prop); `#footer` — content below the body; `#title`, `#description`, `#authors`, `#default`.
+  - **Props (used)**: `title` (string), `image` (string — bound to `image_url`). Do not use `description`, `date`, `variant`, `orientation`, or other unspecified props.
+  - **Slots**: `#badge` — custom badge rendering area; `#footer` — icon-only action buttons; `#title`, `#default`.
   - **Theme slots**: `root`, `header`, `body`, `footer`, `image`, `title`, `description`, `authors`, `avatar`, `meta`, `date`, `badge`.
   - **Gallery item mapping**:
     ```vue
     <UBlogPost
       :title="item.title"
-      :description="item.prompt"
-      :date="formatDate(item.created_at)"
       :image="item.image_url"
-      orientation="vertical"
-      variant="outline"
     >
       <template #badge>
         <UBadge
@@ -62,15 +58,22 @@
       <template #footer>
         <UButton
           icon="i-lucide-copy"
-          label="複製提示詞"
-          variant="ghost"
+          variant="outline"
+          color="neutral"
           size="sm"
           @click="copyPrompt(item.prompt)"
+        />
+        <UButton
+          icon="i-lucide-eye"
+          variant="outline"
+          color="neutral"
+          size="sm"
+          @click="openDetail(item)"
         />
       </template>
     </UBlogPost>
     ```
-  - **Image error handling**: Attach `@error` on an `<img>` within a custom `#header` slot, or handle via CSS fallback. Since `UBlogPost` renders the image internally via the `image` prop, a custom `#header` slot may be needed for fallback control.
+  - **Image error handling**: When `image_url` is empty or fails to load, render fallback text `'尚未設定圖片'` instead of displaying a broken image. Use conditional rendering (`v-if`/`v-else` or ternary in `h()`) to show a styled text placeholder. Example: `<span v-if="!item.image_url" class="text-sm text-muted">尚未設定圖片</span>`
 
 ---
 
@@ -92,13 +95,12 @@
       {
         accessorKey: 'image_url',
         header: '圖片',
-        cell: ({ row }) => h('img', {
-          src: row.original.image_url,
-          class: 'w-16 h-16 object-cover rounded',
-          onError: (e: Event) => {
-            (e.target as HTMLImageElement).src = '/placeholder.png'
-          }
-        })
+        cell: ({ row }) => row.original.image_url
+          ? h('img', {
+              src: row.original.image_url,
+              class: 'w-16 h-16 object-cover rounded',
+            })
+          : h('span', { class: 'text-sm text-(--ui-text-muted)' }, '尚未設定圖片')
       },
       {
         accessorKey: 'title',
@@ -119,7 +121,7 @@
         header: '啟用',
         cell: ({ row }) => h(resolveComponent('USwitch'), {
           modelValue: row.original.isActive,
-          'onUpdate:modelValue': (val: boolean) => toggleActive(row.original, val)
+          disabled: true
         })
       },
       {
@@ -136,15 +138,16 @@
         header: '操作',
         cell: ({ row }) => h('div', { class: 'flex gap-2' }, [
           h(resolveComponent('UButton'), {
-            label: '編輯',
-            variant: 'ghost',
+            icon: 'lucide:edit',
+            color: 'neutral',
+            variant: 'outline',
             size: 'xs',
             onClick: () => openEdit(row.original)
           }),
           h(resolveComponent('UButton'), {
-            label: '刪除',
+            icon: 'lucide:trash',
             color: 'error',
-            variant: 'ghost',
+            variant: 'outline',
             size: 'xs',
             onClick: () => confirmDelete(row.original)
           })
@@ -230,17 +233,17 @@
 - **Rationale**: `UFileUpload` provides drag-and-drop zone, file type restriction, and preview capabilities. The `useFileUpload` composable provides `files`, `open`, `reset`, and `remove` helpers.
 - **Alternatives considered**: Raw `<input type="file">` — rejected because UFileUpload provides consistent theming, drag-and-drop, and file list management out of the box.
 - **Key API details**:
-  - **Props**: `accept` (string, e.g. `'image/*'`), `multiple` (boolean), `dropzone` (boolean), `interactive` (boolean), `label` (string), `description` (string), `icon` (string), `color`, `variant` (`'area' | 'button'`), `size`.
+  - **Props**: `accept` (string, e.g. `'.webp'`), `multiple` (boolean), `dropzone` (boolean), `interactive` (boolean), `label` (string), `description` (string), `icon` (string), `color`, `variant` (`'area' | 'button'`), `size`.
   - **Slots**: `#default` (receives `{ dragover }`), `#actions`.
-  - **Composable**: `useFileUpload({ accept, multiple, maxFiles, maxSize })` returns `{ files, open, reset, remove }`.
+  - **Composable**: `useFileUpload({ accept, multiple, maxFiles, maxSize })` returns `{ files, open, reset, remove }`. For this feature: `accept: '.webp'`, `maxSize: 2 * 1024 * 1024`.
   - **v4.4 note**: FileUpload now emits `null` when clearing files (previously emitted empty array).
   - **Pattern for gallery admin**:
     ```vue
     <script setup>
     const { files: uploadFiles, open, reset } = useFileUpload({
-      accept: 'image/*',
+      accept: '.webp',
       maxFiles: 1,
-      maxSize: 5 * 1024 * 1024
+      maxSize: 2 * 1024 * 1024
     })
     </script>
 
@@ -253,9 +256,9 @@
         <UFileUpload
           v-else
           v-model="uploadFiles"
-          accept="image/*"
+          accept=".webp"
           label="拖放圖片或點擊上傳"
-          description="PNG, JPG, WebP (最大 5MB)"
+          description="WebP 格式 (最大 2MB)"
           icon="i-lucide-upload"
         />
       </UFormField>
@@ -266,39 +269,26 @@
 
 ## R-007: @nuxt/ui USwitch — Inline isActive Toggle
 
-- **Decision**: Use `USwitch` with `v-model` binding in both the UTable cell (for inline status toggle) and the UForm (for the isActive form field). In the table context, bind `@update:modelValue` to trigger a Supabase update.
-- **Rationale**: `USwitch` is the official toggle component based on Reka UI Switch, providing accessible on/off toggling with color and loading states.
-- **Alternatives considered**: `UCheckbox` — rejected because a toggle switch is the standard UX pattern for boolean status fields in admin lists.
+- **Decision**: Use `USwitch` in two contexts: (1) In the admin UTable cell with `disabled: true` (display only — no inline toggling); (2) In the edit form with interactive `v-model` binding (toggle is done through the edit form only).
+- **Rationale**: `USwitch` is the official toggle component based on Reka UI Switch. The plan confirms the table switch is display-only (`disabled: true`), and toggling is handled exclusively through the edit form.
+- **Alternatives considered**: `UCheckbox` — rejected because a toggle switch is the standard UX pattern for boolean status fields.
 - **Key API details**:
   - **Props**: `modelValue` (boolean, via v-model), `label` (string), `description` (string), `loading` (boolean — shows spinner), `color` (semantic color), `size` (`'xs' | 'sm' | 'md' | 'lg' | 'xl'`), `disabled` (boolean), `on-icon`, `off-icon`.
-  - **Events**: `@update:modelValue` (emitted when toggled).
-  - **Note**: The plan says `disabled` = `false` — i.e., the switch should be interactive in the table. The `loading` prop can show a spinner during the API call.
-  - **Inline table toggle pattern**:
+  - **Events**: `@update:modelValue` (emitted when toggled — only used in form context).
+  - **Note**: USwitch in admin table is `disabled: true` — display only. Toggle is done through the edit form's USwitch (which is interactive).
+  - **Inline table display pattern (disabled)**:
     ```ts
-    // In column definition cell function
+    // In column definition cell function — display only, no toggle handler
     cell: ({ row }) => h(resolveComponent('USwitch'), {
       modelValue: row.original.isActive,
-      loading: togglingId.value === row.original.id,
-      'onUpdate:modelValue': (val: boolean) => handleToggleActive(row.original.id, val)
+      disabled: true
     })
     ```
-  - **Handler**:
-    ```ts
-    async function handleToggleActive(id: number, val: boolean) {
-      togglingId.value = id
-      const { error } = await supabase
-        .from('gallery_items')
-        .update({ isActive: val })
-        .eq('id', id)
-
-      if (error) {
-        toast.add({ title: '更新失敗', color: 'error' })
-      } else {
-        toast.add({ title: '狀態已更新', color: 'success' })
-        // Update local store
-      }
-      togglingId.value = null
-    }
+  - **Form context (interactive)**:
+    ```vue
+    <UFormField name="isActive" label="啟用">
+      <USwitch v-model="formState.isActive" />
+    </UFormField>
     ```
 
 ---
@@ -326,17 +316,18 @@
 
 ## R-009: @nuxt/ui UButton — Action Buttons
 
-- **Decision**: Use `UButton` with appropriate `variant` and `color` props for each action context: `variant="ghost"` for copy prompt and edit, `color="error"` + `variant="ghost"` for delete, default solid for form submit and add-new actions.
-- **Rationale**: `UButton` is the standard interactive element in Nuxt UI, supporting icons, loading states, and variant-based styling.
+- **Decision**: Use `UButton` with appropriate `variant` and `color` props for each action context. Gallery card buttons are icon-only with `variant="outline"` and `color="neutral"`. Admin table action buttons are icon-only with `variant="outline"`.
+- **Rationale**: `UButton` is the standard interactive element in Nuxt UI, supporting icons, loading states, and variant-based styling. Icon-only buttons (no label) are used for compact UI in cards and table rows.
 - **Alternatives considered**: None — `UButton` is the only appropriate choice.
 - **Key API details**:
   - **Props**: `label` (string), `color` (semantic color), `variant` (`'solid' | 'outline' | 'soft' | 'subtle' | 'ghost' | 'link'`), `size` (`'xs' | 'sm' | 'md' | 'lg' | 'xl'`), `icon` (string — leading icon), `trailing-icon`, `avatar`, `loading` (boolean — shows spinner and disables), `disabled` (boolean), `block` (full-width), `class`, `ui`.
   - **Link props**: Also accepts `to`, `target`, `href` etc. for navigation.
   - **Button variants in this feature**:
-    - **Copy prompt**: `variant="ghost"`, `icon="i-lucide-copy"`, `size="sm"`
+    - **Copy prompt (card #footer)**: `variant="outline"`, `color="neutral"`, `icon="i-lucide-copy"`, `size="sm"` (icon only, no label)
+    - **Detail view (card #footer)**: `variant="outline"`, `color="neutral"`, `icon="i-lucide-eye"`, `size="sm"` (icon only, opens modal)
     - **Add new**: `icon="i-lucide-plus"`, default variant
-    - **Edit row**: `variant="ghost"`, `size="xs"`
-    - **Delete row**: `color="error"`, `variant="ghost"`, `size="xs"`
+    - **Edit row (admin table)**: `color="neutral"`, `variant="outline"`, `icon="lucide:edit"`, `size="xs"` (icon only, no label)
+    - **Delete row (admin table)**: `color="error"`, `variant="outline"`, `icon="lucide:trash"`, `size="xs"` (icon only, no label)
     - **Form submit**: default color, `:loading="submitting"`
     - **Add badge**: `variant="outline"`, `size="sm"`
 
@@ -372,23 +363,24 @@
 
 ## R-011: Supabase Storage API — Image Upload Pattern
 
-- **Decision**: Use `useSupabaseClient()` to access the Supabase Storage API. Upload images to a dedicated bucket (e.g., `images`), generate a unique filename with timestamp, then retrieve the public URL via `getPublicUrl()`.
-- **Rationale**: The project already uses `@nuxtjs/supabase` module (v2.0.3) which provides `useSupabaseClient()`. The plan requires uploading to Supabase Storage and obtaining the public URL before saving the gallery item record.
+- **Decision**: Use `useSupabaseClient()` to access the Supabase Storage API. Upload `.webp` images only (max 2MB) to a dedicated bucket (e.g., `images`), generate a unique filename with timestamp, then retrieve the public URL via `getPublicUrl()`.
+- **Rationale**: The project already uses `@nuxtjs/supabase` module (v2.0.3) which provides `useSupabaseClient()`. The plan requires uploading to Supabase Storage and obtaining the public URL before saving the gallery item record. Only `.webp` format is accepted (max 2MB).
 - **Alternatives considered**: Server-side API route for upload — rejected for SPA mode (`ssr: false`). Direct Supabase client upload is simpler and works well for client-side SPAs.
 - **Key API details**:
+  - **File restrictions**: `.webp` format only, maximum 2MB. Validated client-side via `useFileUpload({ accept: '.webp', maxSize: 2 * 1024 * 1024 })`.
   - **Upload pattern**:
     ```ts
     const supabase = useSupabaseClient()
 
     async function uploadImage(file: File): Promise<string | null> {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `nbp-${Date.now()}.${fileExt}`
+      const fileName = `nbp-${Date.now()}.webp`
       const filePath = `gallery/${fileName}`
 
       const { error: uploadError } = await supabase.storage
         .from('images')
         .upload(filePath, file, {
           cacheControl: '3600',
+          contentType: 'image/webp',
           upsert: false
         })
 
@@ -411,8 +403,8 @@
 
 ## R-012: Supabase Client CRUD — Data Operations
 
-- **Decision**: Use `useSupabaseClient()` for all CRUD operations on the `gallery_items` table. Follow the existing pattern of `.from().select()/insert()/update()/delete()` with proper error handling and toast notifications.
-- **Rationale**: The project already has an established pattern with `@nuxtjs/supabase` (see `useGallery.ts`). All operations are client-side since `ssr: false`.
+- **Decision**: Use `useSupabaseClient()` for all CRUD operations on the `gallery_items` table. Follow the existing pattern of `.from().select()/insert()/update()/delete()` with proper error handling and toast notifications. The `id` column is UUID (string), not BIGINT.
+- **Rationale**: The project already has an established pattern with `@nuxtjs/supabase` (see `useGallery.ts`). All operations are client-side since `ssr: false`. `GalleryItem.id` is UUID type (string) in Supabase.
 - **Alternatives considered**: Server API routes with Nitro — rejected because the project is an SPA (`ssr: false`) and direct Supabase client calls are the established pattern.
 - **Key API details**:
   - **Select (public gallery — active only, sorted)**:
@@ -456,24 +448,18 @@
         badges: formState.badges,
         isActive: formState.isActive
       })
-      .eq('id', formState.id)
+      .eq('id', formState.id) // id is UUID string
       .select()
       .single()
     ```
-  - **Delete**:
+  - **Delete** (id is UUID string):
     ```ts
     const { error } = await supabase
       .from('gallery_items')
       .delete()
-      .eq('id', itemId)
+      .eq('id', itemId) // itemId: string (UUID)
     ```
-  - **Toggle isActive**:
-    ```ts
-    const { error } = await supabase
-      .from('gallery_items')
-      .update({ isActive: newValue })
-      .eq('id', itemId)
-    ```
+  - **Note on `id` type**: `GalleryItem.id` is UUID (string) in Supabase, not BIGINT (number). All `.eq('id', ...)` calls receive a string value. The `badges` JSONB column is nullable at the DB level, but the UI form enforces ≥1 badge.
   - **Existing codebase pattern**: Store uses `setItems()`, `setPending()`, `setError()` setters. Composable wraps Supabase calls in `useAsyncData()` with `server: false`.
 
 ---

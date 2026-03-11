@@ -1,32 +1,25 @@
 <!--
   SYNC IMPACT REPORT
   ==================
-  Version change: 0.0.0 (template) → 1.0.0 (initial population)
-  Bump rationale: MAJOR — first population of constitution from template
+  Version change: 1.0.0 → 1.1.0
+  Bump rationale: MINOR — two new principles/workflow rules added
 
-  Principles added (8):
-    I.   Brownfield Preservation (NON-NEGOTIABLE)
-    II.  Dependency Lock (NON-NEGOTIABLE)
-    III. UI-First Development
-    IV.  TypeScript Strictness
-    V.   Nuxt Auto-Import Convention
-    VI.  Component Standards
-    VII. Pinia Setup Stores
-    VIII.No-Test Policy
+  Principles added:
+    IX. Code Reusability (DRY)
 
-  Sections added:
-    - Technology Stack
-    - Development Workflow
+  Development Workflow additions:
+    - Post-implementation quality check rule
 
+  Principles modified: none
   Sections removed: none
   Principles removed: none
 
   Template consistency:
-    ✅ plan-template.md     — Compatible, no changes needed
-    ✅ spec-template.md     — Compatible, no changes needed
-    ✅ tasks-template.md    — Compatible (tests already OPTIONAL)
+    ✅ plan-template.md      — Compatible, no changes needed
+    ✅ spec-template.md      — Compatible, no changes needed
+    ✅ tasks-template.md     — Compatible (tests already OPTIONAL)
     ✅ checklist-template.md — Compatible, no changes needed
-    ✅ README.md            — Compatible, no changes needed
+    ✅ README.md             — Compatible, no changes needed
 
   Deferred items: none
   Follow-up TODOs: none
@@ -89,6 +82,14 @@ be used for new state definitions.
 This project does not require unit tests or end-to-end (E2E) tests.
 Test files MUST NOT be generated unless explicitly requested by the user.
 
+### IX. Code Reusability (DRY)
+
+When code duplication appears, duplicate code MUST be extracted into
+reusable Composables or components to improve maintainability and
+readability. Example: `h(resolveComponent('UButton'), { ... })` MUST be
+refactored to `const UButton = resolveComponent('UButton'); h(UButton, { ... })`
+when the resolved component is used multiple times.
+
 ## Technology Stack
 
 - **Framework**: Nuxt 4.3+
@@ -109,6 +110,9 @@ Test files MUST NOT be generated unless explicitly requested by the user.
   before being committed.
 - Vue SFC block ordering (template → script → style) MUST be enforced
   in every `.vue` file touched during a change.
+- After implementation is complete, all code MUST be reviewed for
+  TypeScript warnings and errors. Issues MUST be fixed before committing,
+  except for transient issues that resolve after `npm run dev`.
 
 ## Governance
 
@@ -120,4 +124,4 @@ Test files MUST NOT be generated unless explicitly requested by the user.
 - The raw source principles are maintained in
   `.specify/sdd-docs/constitution.md` as the authoritative reference.
 
-**Version**: 1.0.0 | **Ratified**: 2026-03-04 | **Last Amended**: 2026-03-04
+**Version**: 1.1.0 | **Ratified**: 2026-03-04 | **Last Amended**: 2026-03-09

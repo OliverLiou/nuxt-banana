@@ -12,7 +12,7 @@ import type { BadgeProps } from '#ui/types'
 type BadgeColor = BadgeProps['color']
 
 interface GalleryItem {
-  id: number
+  id: string
   image_url: string
   title: string
   prompt: string
@@ -22,7 +22,7 @@ interface GalleryItem {
 }
 
 interface GalleryFormState {
-  id?: number
+  id?: string
   title: string | null
   image_url: string | null
   upload_image: File | null
@@ -156,7 +156,7 @@ function useGalleryAdmin(): {
   pending: Ref<boolean>
   error: Ref<string | null>
   slideoverOpen: Ref<boolean>
-  editingId: Ref<number | null>
+  editingId: Ref<string | null>
   formState: Ref<GalleryFormState>
   isEditMode: ComputedRef<boolean>
 
@@ -165,7 +165,7 @@ function useGalleryAdmin(): {
 
   // CRUD actions
   submitForm: () => Promise<void>
-  toggleActive: (itemId: number, isActive: boolean) => Promise<void>
+  toggleActive: (itemId: string, isActive: boolean) => Promise<void>
   deleteItem: (item: GalleryItem) => Promise<void>
 
   // Image upload
@@ -189,7 +189,7 @@ function useGalleryAdmin(): {
 | `pending`        | `Ref<boolean>`                     | Loading state for admin operations               |
 | `error`          | `Ref<string \| null>`              | Error message from admin operations              |
 | `slideoverOpen`  | `Ref<boolean>`                     | Controls slideover visibility                    |
-| `editingId`      | `Ref<number \| null>`              | ID of item being edited, `null` = create mode    |
+| `editingId`      | `Ref<string \| null>`              | ID of item being edited, `null` = create mode    |
 | `formState`      | `Ref<GalleryFormState>`            | Reactive form state                              |
 | `isEditMode`     | `ComputedRef<boolean>`             | Whether the form is in edit mode                 |
 | `fetchAll`       | `() => Promise<void>`              | Fetch all items for admin table                  |
@@ -323,7 +323,9 @@ export const useGalleryAdmin = () => {
   }
 
   // ── Toggle isActive ──
-  async function toggleActive(itemId: number, isActive: boolean) {
+  // Note: Called from the edit form save flow or programmatic use.
+  // The admin table USwitch is disabled (display only); toggling isActive is done via the edit form.
+  async function toggleActive(itemId: string, isActive: boolean) {
     const { error } = await supabase
       .from('gallery_items')
       .update({ isActive })
@@ -431,7 +433,7 @@ toast.add({ title: '<操作>失敗', description: error.message, color: 'error' 
 
 ### Error Recovery
 
-- **Toggle failure**: The UI toggle (USwitch) should revert to its previous state. The store is not updated on failure, so re-reading store state restores the correct value.
+- **Toggle failure**: The admin table USwitch is `disabled: true` (display only). Toggling isActive is done via the edit form. On failure, the store is not updated, so re-reading store state restores the correct value.
 - **Upload failure**: Form submission is aborted. The user retains their form input and can retry.
 - **Delete failure**: Item remains in the store and table. No state changes on failure.
 - **Fetch failure**: Store error state is set; components display error UI or retry option.
@@ -449,3 +451,50 @@ Page Component
 ```
 
 Both composables are **auto-imported** by Nuxt from the `app/composables/` directory.
+
+---
+
+## MW-001: `auth` Route Middleware
+
+> Location: `app/middleware/auth.ts` — **NEW FILE**
+> Activated via: `definePageMeta({ middleware: 'auth' })` on protected pages
+
+### Contract
+
+```typescript
+// app/middleware/auth.ts
+export default defineNuxtRouteMiddleware((to, from) => {
+  const userStore = useUserStore()
+  const toast = useToast()
+
+  // Not authenticated — redirect to login
+  if (userStore.role === null || userStore.role === undefined) {
+    return navigateTo('/login')
+  }
+
+  // Authenticated but not admin — redirect to home with toast
+  if (userStore.role !== 'admin') {
+    toast.add({
+      title: '您無此頁面權限, 即將為您導回首頁',
+      color: 'error',
+    })
+    return navigateTo('/')
+  }
+
+  // Admin — allow navigation
+})
+```
+
+### Redirect Rules
+
+| Condition | Action | Destination |
+|-----------|--------|-------------|
+| `role` is `null` / `undefined` | Redirect (silent) | `/login` |
+| `role` is not `'admin'` | Redirect + toast | `/` |
+| `role` is `'admin'` | Allow | Continue to page |
+
+### Dependencies
+
+- Reads from: `useUserStore().role`
+- Uses: `useToast()`, `navigateTo()`
+- Auto-imported by Nuxt (no manual import needed for `defineNuxtRouteMiddleware`)

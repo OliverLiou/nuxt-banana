@@ -5,6 +5,8 @@
 
 **Tests**: No-Test Policy (per constitution — no test tasks generated)
 
+**Status**: Base implementation complete. Phases 1–9 below are the original build tasks (all ✅). **Phase 10** contains alignment corrections to match the updated design specifications — UUID string types, GalleryFormState nullability (`string | null`), `.webp` 2MB upload, text image fallback `'尚未設定圖片'`, icon-only footer buttons, admin auth guard, USwitch display-only in table. spec.md now fully aligned with plan.md/tasks.md after consistency fixes (FR-010 display-only, US3 card footer copy, auth guard clarification, GalleryFormState nullability).
+
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
 ## Format: `[ID] [P?] [Story] Description`
@@ -16,236 +18,236 @@
 ## Path Conventions
 
 - **Web app**: Nuxt 4 project with `app/` directory for pages, components, composables, stores
-- **Shared types**: `shared/types/index.d.ts`
-- **Public assets**: `public/`
+- **Shared types**: `shared/types/` (`index.d.ts` for global types, `index.ts` for exported types/utils)
+- **Shared utils**: `shared/utils/gallery.ts`
 
 ---
 
-## Phase 1: Setup (Shared Infrastructure)
+## Phase 1–9: Base Implementation (Complete ✅)
 
-**Purpose**: Project initialization, type definitions, and static assets
+<details>
+<summary>Click to expand completed base tasks</summary>
 
-- [X] T001 Add placeholder fallback image for broken image URLs in `public/placeholder.png`
-- [X] T002 [P] Extend global type definitions with `Badge`, `GalleryFormState`, and `BadgeColor` types in `shared/types/index.d.ts` — fix existing `created_at: timestamp` to `created_at: string`, add `Badge` interface (`{ label: string; color: BadgeColor }`), add `GalleryFormState` interface (`{ id?: number; title: string | null; image_url: string | null; upload_image: File | null; prompt: string | null; badges: Badge[]; isActive: boolean }`), add `getDefaultFormState()` factory function type
+### Phase 1: Setup
+
+- [X] T001 Add placeholder fallback image in `public/placeholder.png` *(superseded by T101)*
+- [X] T002 [P] Extend global type definitions in `shared/types/index.d.ts` and `shared/types/index.ts`
 - [X] T003 [P] Create admin pages directory structure at `app/pages/admin/`
 
----
+### Phase 2: Foundational
 
-## Phase 2: Foundational (Blocking Prerequisites)
+- [X] T004 Extend Pinia gallery store in `app/stores/galleryStore.ts`
+- [X] T005 Rewrite `useGallery` composable in `app/composables/useGallery.ts`
+- [X] T006 [P] Create `useGalleryAdmin` composable in `app/composables/useGalleryAdmin.ts`
 
-**Purpose**: Core state management and data-access layer that MUST be complete before ANY user story can be implemented
+### Phase 3: US1 — Browse Public Gallery
 
-**⚠️ CRITICAL**: No user story work can begin until this phase is complete
+- [X] T007 [US1] Create public gallery page in `app/pages/gallery.vue`
 
-- [X] T004 Extend Pinia gallery store with pagination state, admin state, form/slideover state, and all actions per store contract in `app/stores/galleryStore.ts` — add `page`, `hasMore`, `allItems`, `adminPending`, `adminError`, `slideoverOpen`, `editingId`, `formState`, `isEditMode` computed; add actions: `appendItems`, `setPage`, `setHasMore`, `resetPagination`, `setAllItems`, `setAdminPending`, `setAdminError`, `addItem`, `updateItemInList`, `removeItem`, `openCreate`, `openEdit`, `closeSlideover`, `resetForm`; preserve existing `setItems`, `setPending`, `setError`
-- [X] T005 Rewrite `useGallery` composable to replace mock data with real Supabase queries and infinite scroll pagination in `app/composables/useGallery.ts` — implement `loadMore()` with `.range(from, to)` pagination, `refresh()` for reset, `hasMore` computed, guard against duplicate calls, initial auto-load on mount, toast on error; return `{ items, pending, error, hasMore, loadMore, refresh }`
-- [X] T006 [P] Create `useGalleryAdmin` composable with full CRUD operations in `app/composables/useGalleryAdmin.ts` — implement `fetchAll()`, `submitForm()` (create/update with image upload), `toggleActive()`, `deleteItem()` (with storage cleanup), `uploadImage()`, `openCreate()`, `openEdit()`, `closeSlideover()`, `validate()` (custom UForm validation with create/edit mode detection); use toast notifications per contract error table; return all state refs and action functions
+### Phase 4: US2 — View Image Details
 
-**Checkpoint**: Foundation ready — store extended, composables wired to Supabase, user story implementation can now begin
+- [X] T008 [P] [US2] Create `GalleryDetail` modal component in `app/components/GalleryDetail.vue`
+- [X] T009 [US2] Integrate `GalleryDetail` modal into gallery page in `app/pages/gallery.vue`
 
----
+### Phase 5: US4 — Manage Gallery Items as Admin
 
-## Phase 3: User Story 1 — Browse Public Gallery (Priority: P1) 🎯 MVP
+- [X] T010 [US4] Create admin gallery management page in `app/pages/admin/gallery.vue`
 
-**Goal**: Visitors can browse a visually clean list of active gallery items with infinite scroll, each showing thumbnail, title, and badges
+### Phase 6: US5 — Create and Edit Gallery Items
 
-**Independent Test**: Open `/gallery` as an unauthenticated visitor and verify that only active items appear, sorted newest-first, with infinite scroll loading additional batches. Empty state message appears when no active items exist.
+- [X] T011 [P] [US5] Create `GalleryForm` component in `app/components/GalleryForm.vue`
+- [X] T012 [US5] Integrate `GalleryForm` into `USlideover` in `app/pages/admin/gallery.vue`
+- [X] T012b [US5] Add unsaved-changes navigation guard in `app/pages/admin/gallery.vue`
 
-### Implementation for User Story 1
+### Phase 7: US3 — Copy Prompt Text
 
-- [X] T007 [US1] Create public gallery page in `app/pages/gallery.vue` — implement `UScrollArea` with responsive orientation (vertical on md+, horizontal on mobile via `useBreakpoints`), render `UBlogPost` cards mapping `GalleryItem` fields (`title`, `prompt` as description, `image_url` as image, `created_at` as formatted date, badges via `#badge` slot with `UBadge`), wire `useInfiniteScroll` from VueUse to `loadMore()` targeting ScrollArea viewport element `[data-reka-scroll-area-viewport]`, show loading skeleton during fetch, show empty state message "目前尚無公開的展示作品" when no items, handle image load errors with fallback placeholder, add `loading="lazy"` to all `<img>` elements for performance
+- [X] T013 [P] [US3] Add copy prompt button to `GalleryDetail` modal
+- [X] T014 [P] [US3] Add copy prompt button to gallery card footer
 
-**Checkpoint**: User Story 1 complete — public gallery page shows active items with infinite scroll
+### Phase 8: US6 — Delete Gallery Items
 
----
+- [X] T015 [US6] Add delete confirmation and execution in `app/pages/admin/gallery.vue`
 
-## Phase 4: User Story 2 — View Image Details (Priority: P1)
+### Phase 9: Polish
 
-**Goal**: Visitors can click a gallery item to see full details (high-res image, title, badges, date, prompt) in a modal overlay without leaving the gallery page
+- [X] T016 [P] Image error fallback handling *(superseded by T108)*
+- [X] T017 [P] Edge case handling for long prompts, special characters, Unicode
+- [X] T018 Constitution compliance checklist validation
 
-**Independent Test**: Click any gallery item and confirm the `UModal` displays high-resolution image, title, all badges with colors, creation date, and full prompt text. Closing the modal returns to the same scroll position.
-
-### Implementation for User Story 2
-
-- [X] T008 [P] [US2] Create `GalleryDetail` modal component in `app/components/GalleryDetail.vue` — accept `item: GalleryItem` and `open: boolean` (v-model) props; use `UModal` to display full-resolution image (`image_url` with error fallback), title, all badges via `UBadge` with label and color, formatted creation date, full prompt text in scrollable container for long text; handle image error with placeholder fallback
-- [X] T009 [US2] Integrate `GalleryDetail` modal into gallery page in `app/pages/gallery.vue` — add `selectedItem` ref, bind `@click` on each `UBlogPost` card to set `selectedItem` and open modal, pass `selectedItem` to `GalleryDetail` component, ensure scroll position is preserved on modal close
-
-**Checkpoint**: User Stories 1 AND 2 complete — gallery browsing with detail view modal working
-
----
-
-## Phase 5: User Story 4 — Manage Gallery Items as Admin (Priority: P1)
-
-**Goal**: Admins can view all gallery items (active and inactive) in a table with inline status toggle
-
-**Independent Test**: Log in as admin, navigate to `/admin/gallery`, verify all items listed with thumbnail, title, truncated prompt, date, badges, and working `USwitch` status toggle with toast feedback.
-
-### Implementation for User Story 4
-
-- [X] T010 [US4] Create admin gallery management page in `app/pages/admin/gallery.vue` — implement `UTable` with TanStack `ColumnDef<GalleryItem>[]` columns: image thumbnail (64x64 with error fallback and `loading="lazy"`), title, truncated prompt (max 48 chars), formatted date, `USwitch` for isActive toggle (with loading state via `togglingId` ref), badges via `UBadge` in flex container, actions column with edit and delete `UButton`s; call `fetchAll()` on mount; show loading state; add "新增項目" button with `i-lucide-plus` icon to open create slideover; wire `toggleActive()` from `useGalleryAdmin` to USwitch `onUpdate:modelValue`; when toggling isActive to `false` (停用), show `UModal` confirmation dialog "確定要停用此項目嗎？停用後將從公開畫廊隱藏。" before executing toggle — activation (啟用) does not require confirmation
-
-**Checkpoint**: User Story 4 complete — admin can view all items and toggle status
+</details>
 
 ---
 
-## Phase 6: User Story 5 — Create and Edit Gallery Items (Priority: P1)
+## Phase 10: Alignment Corrections
 
-**Goal**: Admins can create new and edit existing gallery items via a structured form in a slide-over panel with image upload, badge management, and validation
+**Purpose**: Fix discrepancies between existing implementation and updated design specifications. Most changes are **brownfield corrections**. New files: `app/stores/userStore.ts`, `app/middleware/auth.ts` (additive, per Constitution I).
 
-**Independent Test**: Log in as admin, create a new item filling all required fields plus badges, save it. Then edit the same item, change title and badges, save. Verify changes persist and item appears on public gallery if active.
-
-### Implementation for User Story 5
-
-- [X] T011 [P] [US5] Create `GalleryForm` component in `app/components/GalleryForm.vue` — implement `UForm` with custom `validate` prop (create/edit mode-aware validation per contract); fields: image section (show preview if `image_url` exists with "重新上傳" button, else show `UFileUpload` with `accept="image/*"` and 5MB limit), title `UInput`, prompt `UTextarea`, isActive `USwitch`, badge management UI (inline list of existing badges with remove button per badge, add-badge row with label `UInput` + color `USelect` from `BadgeColor` palette + add `UButton`, enforce max 10 badges and unique labels with duplicate warning); emit `submit` event; accept `formState`, `isEditMode`, `validate` as props
-- [X] T012 [US5] Integrate `GalleryForm` into `USlideover` in admin page `app/pages/admin/gallery.vue` — add `USlideover` with `v-model:open="slideoverOpen"`, dynamic title ("新增項目" / "編輯項目" based on `isEditMode`), `#body` slot containing `GalleryForm`, `#footer` slot with cancel button and submit button (with loading state); wire "新增項目" button to `openCreate()`, table edit buttons to `openEdit(item)`, form submit to `submitForm()` from `useGalleryAdmin`; refresh table after successful create/edit
-- [X] T012b [US5] Add unsaved-changes navigation guard to admin gallery page in `app/pages/admin/gallery.vue` — track form dirty state (compare current `formState` against initial snapshot), use `onBeforeRouteLeave` to show confirmation dialog "您有未儲存的變更，確定要離開嗎？" when slideover is open with unsaved changes, prevent accidental navigation away from form (FR-017)
-
-**Checkpoint**: User Stories 1, 2, 4, AND 5 complete — full CRUD except delete, public gallery and admin management functional
-
----
-
-## Phase 7: User Story 3 — Copy Prompt Text (Priority: P2)
-
-**Goal**: Visitors can copy prompt text from the detail view and gallery card footer for reuse
-
-**Independent Test**: Open an item's detail view, click "複製提示詞" button, paste into text editor to confirm accuracy. Verify toast confirmation "複製成功" appears. Test with special characters and multi-line prompts.
-
-### Implementation for User Story 3
-
-- [X] T013 [P] [US3] Add copy prompt button to `GalleryDetail` modal in `app/components/GalleryDetail.vue` — add `UButton` with `icon="i-lucide-copy"`, `label="複製提示詞"`, `variant="ghost"` that calls `navigator.clipboard.writeText(item.prompt)` with success toast "複製成功" via `useToast()`; handle clipboard API failure gracefully
-- [X] T014 [P] [US3] Add copy prompt button to gallery card footer in `app/pages/gallery.vue` — use `UBlogPost` `#footer` slot to add copy prompt `UButton` with same clipboard + toast pattern; prevent click event from bubbling to card click (detail modal open)
-
-**Checkpoint**: User Story 3 complete — prompt copying works from both detail view and gallery cards
+**Key changes addressed**:
+1. `GalleryItem.id` type: `number` → `string` (UUID)
+2. `created_at` type: `timestamp` → `string`
+3. Image fallback: `placeholder.png` / `@error` handler → conditional text `'尚未設定圖片'`
+4. File upload: `image/*` 5MB → `.webp` only, 2MB max
+5. `UBlogPost` props: remove `description`, `date` (only `title` + `image` per R-002)
+6. Footer buttons: icon-only, `variant="outline"`, `color="neutral"` per R-009
+7. Admin table `USwitch`: `disabled: true` (display-only; toggle only via edit form)
+8. Admin auth: `profiles`/`roles` table lookup → `userStore` (new Pinia store) → `auth.ts` middleware → `definePageMeta({ middleware: 'auth' })`; redirect to `/login` if unauthenticated, to `/` with toast if not admin
+9. Admin table action buttons: edit `color="neutral"` / delete `color="error"`, both `variant="outline"`, icon-only
+10. `GalleryFormState` fields: `title`, `image_url`, `prompt` → `string | null` (defaults: `null` not `''`)
 
 ---
 
-## Phase 8: User Story 6 — Delete Gallery Items (Priority: P2)
+### 10-A: Type System Alignment
 
-**Goal**: Admins can permanently delete gallery items with confirmation dialog
+**Purpose**: Fix `GalleryItem.id` from `number` to `string` (UUID) and `GalleryFormState` field nullability (`string` → `string | null`) across all type definitions
 
-**Independent Test**: Log in as admin, click delete on a gallery item, confirm in dialog, verify item removed from admin list and public gallery. Cancel deletion and verify item remains.
-
-### Implementation for User Story 6
-
-- [X] T015 [US6] Add delete confirmation and execution to admin page in `app/pages/admin/gallery.vue` — add `UModal` confirmation dialog with warning text "此操作無法復原，確定要刪除此項目嗎？", confirm and cancel buttons; wire table delete button to show confirmation dialog, confirm button to call `deleteItem(item)` from `useGalleryAdmin` (handles storage cleanup + database delete + toast), refresh table on success; handle delete failure with error toast and item preservation
-
-**Checkpoint**: All user stories complete — full gallery management system functional
+- [ ] T101 Fix `GalleryItem` interface in `shared/types/index.d.ts` — change `id: number` → `id: string`; change `created_at: timestamp` → `created_at: string`
+- [ ] T102 [P] Fix `GalleryFormState` type in `shared/types/index.ts` — change `id?: number` → `id?: string`; change `title: string` → `title: string | null`; change `image_url: string` → `image_url: string | null`; change `prompt: string` → `prompt: string | null` (per data-model.md GalleryFormState contract)
+- [ ] T103 [P] Verify `getDefaultFormState()` in `shared/utils/gallery.ts` — ensure `id` default is `undefined` (not `0`/`null`); change `title`, `image_url`, `prompt` defaults from `''` to `null` (per data-model.md GalleryFormState defaults)
 
 ---
 
-## Phase 9: Polish & Cross-Cutting Concerns
+### 10-B: Store & Composable Fixes
 
-**Purpose**: Edge cases, error handling, and quality improvements that affect multiple user stories
+**Purpose**: Propagate UUID string type through state management and data-access layers
 
-- [X] T016 [P] Ensure image error fallback handling works consistently across all views — verify `public/placeholder.png` is used in gallery cards (`app/pages/gallery.vue`), detail modal (`app/components/GalleryDetail.vue`), and admin table thumbnails (`app/pages/admin/gallery.vue`) via `@error` handler on `<img>` elements
-- [X] T017 [P] Handle edge cases for long prompts, special characters, and Unicode in `app/components/GalleryDetail.vue` and `app/pages/gallery.vue` — ensure prompt text container is scrollable for very long text, special characters render correctly, copy preserves exact content; in `GalleryDetail.vue`, handle case where selected item is deleted by another admin while modal is open (show "此項目已不存在" message and close modal gracefully)
-- [X] T018 Validate against quickstart.md constitution compliance checklist — verify brownfield preservation (no existing files broken), dependency lock (no new packages), UI-first (@nuxt/ui components used), TypeScript strict (no `any` types), auto-imports (no manual imports for Nuxt composables), component standards (PascalCase, template→script→style order), Pinia setup stores, no test files, toast feedback on all CRUD operations
+**⚠️ CRITICAL**: Phase 10-A (type fixes) must complete first
+
+- [ ] T104 Fix `galleryStore.ts` in `app/stores/galleryStore.ts` — change `editingId: ref<number | null>(null)` → `ref<string | null>(null)`; verify `openEdit(item)` assigns `item.id` (now string) correctly; verify `removeItem(id)` parameter type is string
+- [ ] T105 [P] Fix `useGalleryAdmin.ts` in `app/composables/useGalleryAdmin.ts` — change all `itemId: number` parameters to `itemId: string` in `toggleActive()`, `deleteItem()`, and any other functions accepting item id; verify Supabase `.eq('id', itemId)` calls work with string UUID
+
+---
+
+### 10-C: Admin Auth Guard & Infrastructure
+
+**Purpose**: Add role-based access control to admin gallery page using `profiles`/`roles` tables, a new `userStore`, and route middleware
+
+- [ ] T119 [P] Add `Profile` and `Role` TypeScript types to `shared/types/index.d.ts` or a new auth types file — `Profile: { id: string; userId: string; roleId: string }`, `Role: { id: string; created_at: string }`; ensure Supabase `database.types.ts` includes `profiles` and `roles` table types (run `npx supabase gen types` or add manually)
+- [ ] T120 Create `app/stores/userStore.ts` — Pinia setup store with: `role: ref<string | null>(null)`, `isAdmin: computed(() => role.value === 'admin')`, `fetchRole()` action that queries `profiles` table via `useSupabaseClient().from('profiles').select('roleId').eq('userId', user.id).single()` and sets `role.value`, `clearRole()` action that resets role to null
+- [ ] T121 Create `app/middleware/auth.ts` — Nuxt route middleware that reads `userStore.role`; if `role` is `null`/`undefined`, redirect to `/login` via `navigateTo('/login')`; if `role` is not `'admin'`, redirect to `/` with toast `'您無此頁面權限, 即將為您導回首頁'` via `useToast()` and `navigateTo('/')`
+- [ ] T106 [US4] Update `app/pages/admin/gallery.vue` — add `definePageMeta({ middleware: 'auth' })` to activate the auth middleware; remove any inline role-check logic that duplicates the middleware's responsibility
+- [ ] T122 [P] Update `app/pages/login.vue` — after successful Supabase login, call `userStore.fetchRole()` to cache the user's role from the `profiles` table; on logout, call `userStore.clearRole()` to reset cached role state
+
+---
+
+### 10-D: US1 Corrections — Browse Public Gallery
+
+**Purpose**: Fix UBlogPost prop usage and image fallback
+
+- [ ] T107 [US1] Update `app/pages/gallery.vue` UBlogPost rendering — remove `description` prop (do NOT bind `prompt` to description), remove `date` prop (do NOT bind `created_at` to date); only use `title` and `image` props per R-002; add an `@error` handler on the image element so that when `image_url` fails to load, the fallback text `'尚未設定圖片'` is displayed (e.g., set a reactive `imageError` flag per item, conditionally render text when the flag is true); when `item.image_url` is empty/null/undefined, show the fallback text directly without attempting to load
+
+---
+
+### 10-E: US2 Corrections — View Image Details
+
+**Purpose**: Fix image fallback in detail modal
+
+- [ ] T108 [US2] Update `app/components/GalleryDetail.vue` image display — use `<img :src="item.image_url" @error="onImageError">` with an error handler that sets a reactive flag; when the flag is true OR when `item.image_url` is empty/null, render styled text `'尚未設定圖片'` instead of the image; ensure no reference to `placeholder.png` remains
+
+---
+
+### 10-F: US3 Corrections — Copy Prompt & Footer Buttons
+
+**Purpose**: Make gallery card footer buttons icon-only with correct variant/color
+
+- [ ] T109 [US3] Update footer buttons in `app/pages/gallery.vue` `#footer` slot — for ALL buttons in the footer (copy prompt button, detail/view button): remove `label` prop (icon-only), set `variant="outline"`, set `color="neutral"` per R-009; ensure `@click.stop` is preserved to prevent event bubbling to card click
+
+---
+
+### 10-G: US4 Corrections — Admin Table
+
+**Purpose**: Fix admin table image fallback, USwitch behavior, and action button styling
+
+- [ ] T110 [US4] Update admin table `isActive` column in `app/pages/admin/gallery.vue` — verify `USwitch` has `disabled: true` prop (display-only, no inline toggle); remove any `onUpdate:modelValue` handler or `toggleActive()` wiring from the table USwitch; status toggling is done ONLY through the edit form's USwitch (not from the table row); verify that the edit form's USwitch for isActive still triggers a confirmation dialog when toggling to inactive (per US4-AC2)
+- [ ] T111 [P] [US4] Update admin table image column in `app/pages/admin/gallery.vue` — replace `placeholder.png` fallback or `@error` handler in the `h()` render function with a ternary: if `row.original.image_url` exists render `h('img', ...)`, else render `h('span', { ... }, '尚未設定圖片')`
+- [ ] T112 [P] [US4] Update admin table action buttons in `app/pages/admin/gallery.vue` — edit button: `color="neutral"`, `variant="outline"`, icon (e.g., `i-lucide-pencil`), **no label** (icon-only); delete button: `color="error"`, `variant="outline"`, icon (e.g., `i-lucide-trash-2`), **no label** (icon-only); per R-003 and R-009
+
+---
+
+### 10-H: US5 Corrections — Form Upload Constraints
+
+**Purpose**: Restrict file upload to `.webp` format and 2MB max size
+
+- [ ] T113 [US5] Update `app/components/GalleryForm.vue` file upload — change `accept` from `"image/*"` to `"image/webp"` (`.webp` only); change max file size validation from 5MB to 2MB (`2 * 1024 * 1024` bytes); update any user-facing validation error message to `'.webp 格式，最大 2MB'`; per R-006 and supabase-storage contract
+
+---
+
+### 10-I: Cleanup & Removal
+
+**Purpose**: Remove stale assets that are no longer referenced
+
+- [ ] T114 Delete `public/placeholder.png` if it exists — all image fallbacks now use text rendering `'尚未設定圖片'`; no code should reference this file after corrections above
+
+---
+
+### 10-J: Validation
+
+**Purpose**: Verify all corrections are type-safe and constitution-compliant
+
+- [ ] T115 Run `npx nuxi typecheck` — verify zero TypeScript errors across all modified files; fix any errors introduced by the `id: number → string` type migration
+- [ ] T116 [P] Verify SFC block order in all `.vue` files — must be `<template>` → `<script setup lang="ts">` → `<style scoped>` per Constitution VI
+- [ ] T117 Grep verification — confirm zero remaining references to `placeholder.png` across entire codebase (`grep -r "placeholder" app/ shared/`); confirm zero remaining `id: number` in type definitions (`grep -r "id.*number" shared/types/`)
+- [ ] T118 Run quickstart.md compliance checklist — brownfield preservation ✅, dependency lock ✅, UI-first ✅, TypeScript strict ✅, auto-imports ✅, component standards ✅, Pinia setup stores ✅, no test files ✅
 
 ---
 
 ## Dependencies & Execution Order
 
-### Phase Dependencies
+### Phase 10 Internal Dependencies
 
-- **Setup (Phase 1)**: No dependencies — can start immediately
-- **Foundational (Phase 2)**: Depends on T002 (types) from Setup — BLOCKS all user stories
-- **User Stories (Phase 3+)**: All depend on Foundational phase completion
-  - US1 (Phase 3): Foundation only
-  - US2 (Phase 4): Depends on US1 (gallery page must exist for modal integration)
-  - US4 (Phase 5): Foundation only — can run in parallel with US1/US2
-  - US5 (Phase 6): Depends on US4 (admin page must exist for slideover integration)
-  - US3 (Phase 7): Depends on US1 and US2 (gallery page and detail modal must exist)
-  - US6 (Phase 8): Depends on US4 (admin page must exist for delete action)
-- **Polish (Phase 9)**: Depends on all user stories being complete
+```
+10-A (Types) ──────┬──► 10-B (Store/Composable) ──► 10-D through 10-I (UI fixes)
+                   │
+                   └──► 10-C (Auth: T119 → T120 → T121 → T106 + T122)
 
-### User Story Dependencies
-
-- **US1 — Browse Public Gallery (P1)**: Can start after Foundational (Phase 2) — No story dependencies
-- **US2 — View Image Details (P1)**: Depends on US1 (needs gallery page to integrate modal)
-- **US4 — Manage Gallery Items (P1)**: Can start after Foundational (Phase 2) — Independent of US1/US2
-- **US5 — Create and Edit Items (P1)**: Depends on US4 (needs admin page for slideover)
-- **US3 — Copy Prompt Text (P2)**: Depends on US1 + US2 (needs gallery page and detail modal)
-- **US6 — Delete Gallery Items (P2)**: Depends on US4 (needs admin page for delete action)
-
-### Within Each User Story
-
-- Components/pages before integration tasks
-- Core functionality before edge case handling
-- Each story should be independently verifiable at its checkpoint
-
-### Parallel Opportunities
-
-- T001, T002, T003 (Setup) can all run in parallel
-- T005 and T006 (composables) can run in parallel after T004 (store)
-- US1 (public gallery) and US4 (admin table) can run in parallel after Foundation
-- T008 (GalleryDetail) and T011 (GalleryForm) can run in parallel (different components)
-- T013 and T014 (copy prompt in two locations) can run in parallel
-- T016 and T017 (polish tasks) can run in parallel
-
----
-
-## Parallel Example: Foundation Phase
-
-```bash
-# After T004 (store extension) completes:
-Task T005: "Rewrite useGallery composable in app/composables/useGallery.ts"
-Task T006: "Create useGalleryAdmin composable in app/composables/useGalleryAdmin.ts"
-# These operate on different files and can run simultaneously
+10-D through 10-I ──► 10-I (Cleanup) ──► 10-J (Validation)
 ```
 
-## Parallel Example: After Foundation
+### Detailed Dependencies
 
-```bash
-# US1 and US4 have no cross-dependencies:
-Task T007: "Create public gallery page in app/pages/gallery.vue"         # US1
-Task T010: "Create admin gallery management page in app/pages/admin/gallery.vue"  # US4
-# These can run simultaneously on different pages
-```
+- **10-A** (T101–T103): No dependencies — start immediately
+- **10-B** (T104–T105): Depends on 10-A (type definitions must be correct before fixing store/composable references)
+- **10-C** (T119–T122, T106): T119 (types) first → T120 (userStore, depends on types) → T121 (middleware, depends on userStore) → T106 (definePageMeta, depends on middleware) + T122 (login page, depends on userStore, parallel with T106)
+- **10-D** (T107): Depends on 10-B (composable types must be aligned)
+- **10-E** (T108): No dependency on other UI tasks — can run in parallel with 10-D, 10-F, 10-G, 10-H
+- **10-F** (T109): Depends on 10-D (same file `gallery.vue` — do after T107)
+- **10-G** (T110–T112): Depends on 10-B (admin page uses store/composable); T111 and T112 parallel with each other
+- **10-H** (T113): No dependency on other UI tasks — can run in parallel with 10-D through 10-G
+- **10-I** (T114): Depends on ALL UI fixes complete (10-D through 10-H — no code should reference placeholder.png)
+- **10-J** (T115–T118): Depends on 10-I (all corrections and cleanup must be done before validation)
 
----
+### Parallel Opportunities Within Phase 10
 
-## Implementation Strategy
-
-### MVP First (User Story 1 Only)
-
-1. Complete Phase 1: Setup (T001–T003)
-2. Complete Phase 2: Foundational (T004–T006) — CRITICAL, blocks all stories
-3. Complete Phase 3: User Story 1 — Browse Public Gallery (T007)
-4. **STOP and VALIDATE**: Open `/gallery`, verify active items load with infinite scroll
-5. Deploy/demo if ready
-
-### Incremental Delivery
-
-1. Setup + Foundational → Foundation ready
-2. Add US1 (Browse Gallery) → Test → MVP!
-3. Add US2 (Detail View) → Test → Enhanced browsing
-4. Add US4 (Admin List) + US5 (Create/Edit) → Test → Admin management
-5. Add US3 (Copy Prompt) → Test → Prompt sharing
-6. Add US6 (Delete Items) → Test → Full feature
-7. Polish → Final quality pass
+- T101, T102, T103 (type fixes) — all in different files, run in parallel
+- T104 and T105 (store + composable) — different files, parallel after 10-A
+- T106 (auth definePageMeta) and T122 (login page) — different files, parallel after T121
+- T108 (GalleryDetail), T113 (GalleryForm) — different components, parallel
+- T110, T111, T112 (admin table fixes) — same file but T111 and T112 are in different column definitions, parallel
+- T115, T116 (typecheck + SFC order) — independent checks, parallel
 
 ### Optimal Single-Developer Path
 
-1. Phase 1: Setup (all parallel) → ~5 min
-2. Phase 2: T004 → T005 + T006 (parallel) → Foundation complete
-3. Phase 3: T007 (public gallery with infinite scroll)
-4. Phase 4: T008 → T009 (detail modal + integration)
-5. Phase 5: T010 (admin table with toggle)
-6. Phase 6: T011 → T012 (form component + slideover integration)
-7. Phase 7: T013 + T014 (parallel copy prompt)
-8. Phase 8: T015 (delete with confirmation)
-9. Phase 9: T016 + T017 (parallel polish) → T018 (final validation)
+1. **10-A**: T101 → T102 + T103 (parallel) → Types aligned
+2. **10-B**: T104 → T105 → Store/Composable fixed
+3. **10-C**: T119 → T120 → T121 → T106 + T122 (parallel) → Auth infrastructure complete
+4. **10-D + 10-F** (same file): T107 → T109 → `gallery.vue` complete
+5. **10-E**: T108 → `GalleryDetail.vue` complete
+6. **10-G**: T110 → T111 + T112 (parallel) → `admin/gallery.vue` complete
+7. **10-H**: T113 → `GalleryForm.vue` complete
+8. **10-I**: T114 → Cleanup done
+9. **10-J**: T115 + T116 (parallel) → T117 → T118 → Validation complete
 
 ---
 
 ## Notes
 
-- [P] tasks = different files, no dependencies on incomplete tasks
+- Phase 10 tasks are **corrections to existing code** — new files: `app/stores/userStore.ts`, `app/middleware/auth.ts`
+- [P] tasks = different files or non-overlapping code regions, no dependencies
 - [Story] label maps task to specific user story for traceability
-- Each user story is independently verifiable at its checkpoint
 - No test files generated (No-Test Policy per constitution)
 - All UI uses @nuxt/ui v4 components exclusively — invoke `nuxt-ui` skill when implementing
-- All text is in Traditional Chinese (繁體中文)
-- Commit after each task or logical group
+- All user-facing text in Traditional Chinese (繁體中文)
+- Image fallback: render text `'尚未設定圖片'` — public gallery (`UBlogPost`) and detail modal use `@error` handler on image element; admin table uses conditional rendering in `h()` render function. **NOT** `placeholder.png`
 - SFC block order: `<template>` → `<script setup lang="ts">` → `<style scoped>`
 - Auto-imports: do NOT manually import `ref`, `computed`, `useRoute`, `useSupabaseClient`, `useToast`, etc.
+- Commit after each sub-phase or logical group of tasks
+- Auth flow: login page → `userStore.fetchRole()` → `auth.ts` middleware reads `userStore.role` → `definePageMeta({ middleware: 'auth' })` on admin pages

@@ -57,17 +57,18 @@ As a **visitor**, I want to click on a gallery item to view its full details in 
 
 ### User Story 3 - Copy Prompt Text (Priority: P2)
 
-As a **visitor**, I want to copy the prompt text from an image's detail view so that I can reuse or reference the prompt in my own creative work.
+As a **visitor**, I want to copy the prompt text from an image's gallery card or detail view so that I can reuse or reference the prompt in my own creative work.
 
 **Why this priority**: Prompt sharing is a key differentiator of this gallery. While not blocking basic browsing, it is essential to the gallery's purpose and user value.
 
-**Independent Test**: Open an item's detail view, click the "Copy Prompt" button, and paste the clipboard contents into a text editor to confirm accuracy. Verify visual feedback appears on the button after copying.
+**Independent Test**: Click the copy prompt button on a gallery card's footer and verify the prompt is copied to the clipboard with a success toast. Also open the detail view, click the copy prompt button there, and verify the same behavior. Test with special characters and multi-line prompts.
 
 **Acceptance Scenarios**:
 
 1. **Given** a visitor is viewing an item's detail, **When** they click the "Copy Prompt" button, **Then** the full prompt text is copied to their clipboard.
 2. **Given** the prompt was successfully copied, **When** the copy action completes, **Then** a brief visual confirmation (e.g., button text change or icon animation) is shown to the visitor.
 3. **Given** a visitor copies a prompt containing special characters or multi-line text, **When** they paste it elsewhere, **Then** the pasted content is identical to the original prompt.
+4. **Given** a visitor is browsing the gallery, **When** they click the copy prompt button on a gallery card's footer, **Then** the full prompt text is copied to their clipboard and a success toast is displayed, without opening the detail modal.
 
 ---
 
@@ -75,19 +76,19 @@ As a **visitor**, I want to copy the prompt text from an image's detail view so 
 
 As an **admin**, I want to view a comprehensive list of all gallery items (both active and inactive) so that I can understand the full inventory and manage items efficiently.
 
-The admin list displays a thumbnail, title, creation date, and current activation status for every item. I can quickly toggle an item's active/inactive status directly from the list without opening an edit form.
+The admin list displays a thumbnail, title, creation date, and current activation status for every item. The current activation status is shown as a read-only indicator on each row. To change an item's active/inactive status, the admin opens the edit form.
 
 **Why this priority**: Admins need visibility into all content and the ability to control what is publicly visible. This is foundational to content management.
 
-**Independent Test**: Log in as an admin, navigate to the gallery management page, and verify all items (active and inactive) are listed with thumbnail, title, date, and a working status toggle.
+**Independent Test**: Log in as an admin, navigate to the gallery management page, and verify all items (active and inactive) are listed with thumbnail, title, date, and a read-only status indicator. Open the edit form and verify that the isActive toggle works from there.
 
 **Acceptance Scenarios**:
 
 1. **Given** an admin is logged in, **When** they navigate to the gallery management page, **Then** they see a list of all gallery items regardless of active status.
-2. **Given** an item is currently active, **When** the admin clicks the status toggle, **Then** a confirmation prompt appears; upon confirming, the item becomes inactive and is immediately hidden from the public gallery.
-3. **Given** an item is currently inactive, **When** the admin clicks the status toggle, **Then** the item becomes active and is immediately visible on the public gallery.
-4. **Given** the admin toggles an item's status, **When** the operation succeeds, **Then** a success notification is displayed on screen.
-5. **Given** the admin toggles an item's status, **When** the operation fails, **Then** a failure notification is displayed and the toggle reverts to its previous state.
+2. **Given** an admin wants to change an item's active status, **When** they open the item's edit form and toggle the isActive switch, **Then** a confirmation prompt appears for deactivation; upon confirming, the item's status is updated and immediately reflected in both the admin list and the public gallery.
+3. **Given** an admin activates an item via the edit form, **When** the toggle is set to active and the form is saved, **Then** the item becomes visible on the public gallery without requiring a separate confirmation step.
+4. **Given** the admin saves a status change via the edit form, **When** the operation succeeds, **Then** a success notification is displayed on screen.
+5. **Given** the admin saves a status change via the edit form, **When** the operation fails, **Then** a failure notification is displayed and the item's status reverts to its previous state.
 
 ---
 
@@ -131,7 +132,7 @@ As an **admin**, I want to delete gallery items that are no longer needed so tha
 ### Edge Cases
 
 - **Empty gallery**: When no active items exist, the public gallery must display a clear empty-state message (e.g., "目前尚無公開的展示作品") instead of a blank page.
-- **Broken image URL**: If an item's `image_url` cannot be loaded (404, timeout, or invalid URL), a standardized fallback/placeholder image must be shown in both the gallery list and the detail view to maintain layout integrity.
+- **Broken image URL**: If an item's `image_url` is empty or cannot be loaded, a text fallback (`'尚未設定圖片'`) must be rendered in place of the image. The fallback mechanism differs by view: the public gallery (`UBlogPost`) and detail modal use `@error` event handlers on the image element; the admin table uses conditional rendering in the `h()` render function. No placeholder image file is used.
 - **Extremely long prompt text**: Prompts may contain hundreds or thousands of characters. The detail view and copy function must handle arbitrarily long text without truncation or UI overflow issues.
 - **Special characters in prompts**: Prompts may contain Unicode, angle brackets, quotation marks, newlines, and other special characters. These must be displayed and copied faithfully.
 - **Rapid status toggling**: If an admin rapidly toggles an item's status multiple times, the system must handle each request sequentially and reflect the final correct state — no race conditions or stale UI.
@@ -154,13 +155,13 @@ As an **admin**, I want to delete gallery items that are no longer needed so tha
 - **FR-003**: The public gallery shall implement scroll-based loading (infinite scroll) to progressively load items as the user scrolls down.
 - **FR-004**: Each item in the public gallery list shall display a thumbnail image, the item title, and all associated badges (with label and color).
 - **FR-005**: Clicking a gallery item shall open a modal overlay displaying: the high-resolution image (`image_url`), title, all badges with labels and colors, creation date, and the full prompt text. Closing the modal returns the visitor to the gallery at their previous scroll position.
-- **FR-006**: The detail view shall include a "Copy Prompt" action that copies the full prompt text to the user's clipboard and provides immediate visual feedback upon success.
+- **FR-006**: The detail view and the gallery card footer shall each include a "Copy Prompt" action that copies the full prompt text to the user's clipboard and provides immediate visual feedback upon success.
 - **FR-007**: When no active gallery items exist, the public gallery shall display an empty-state message clearly informing the visitor that no works are currently available.
-- **FR-008**: When an item's `image_url` fails to load, a fallback placeholder image shall be displayed in its place in both the list and detail views.
+- **FR-008**: When an item's `image_url` is empty or fails to load, the system shall display the fallback text `'尚未設定圖片'` using a strategy appropriate to each view: (a) in the public gallery (`UBlogPost`), an `@error` event handler on the image element triggers the fallback display; (b) in the detail modal (`GalleryDetail`), an `@error` handler on the `<img>` element triggers the fallback display; (c) in the admin table (`UTable`), conditional rendering (`v-if`/ternary in `h()`) displays the text directly when `image_url` is empty. No placeholder image file is used.
 - **FR-009**: The admin gallery management page shall display all gallery items (both active and inactive), sorted by creation date in descending order (newest first), showing each item's thumbnail, title, creation date, and current active status.
-- **FR-010**: The admin list shall provide an inline toggle control on each item to switch its `isActive` status without navigating to an edit form.
+- **FR-010**: The admin list shall display a read-only status indicator (`USwitch` with `disabled: true`) showing each item's current `isActive` state. Toggling `isActive` is performed exclusively through the edit form, not from the admin list.
 - **FR-011**: Sensitive admin operations (deletion, deactivation) shall require a confirmation dialog before execution to prevent accidental changes.
-- **FR-012**: The admin item form shall provide an image upload control. Upon upload, the image is stored in Supabase storage and the resulting public URL is saved as the item's `image_url`. Title (`title`) and prompt (`prompt`) remain required text fields — the form shall block submission and display field-level error messages when any required field is missing.
+- **FR-012**: The admin item form shall provide an image upload control. Upon upload, the image is stored in Supabase storage and the resulting public URL is saved as the item's `image_url`. Title (`title`) and prompt (`prompt`) remain required text fields. At least one badge must be attached before submission. The form shall block submission and display field-level error messages when any required field is missing or when no badges are attached.
 - **FR-013**: The admin item form shall allow adding badges, where each badge consists of a free-text label and a color selected from a predefined system palette.
 - **FR-014**: The admin item form shall include an option to set the item's `isActive` status.
 - **FR-015**: All admin create, update, and delete operations shall display a success or failure notification to the admin upon completion.
@@ -168,6 +169,7 @@ As an **admin**, I want to delete gallery items that are no longer needed so tha
 - **FR-017**: When an admin navigates away from the item form with unsaved changes, the system shall display a confirmation dialog warning about potential data loss before allowing navigation.
 - **FR-018**: Each gallery item shall allow a maximum of 10 badges to be attached. The form shall prevent adding more badges once the limit is reached.
 - **FR-019**: The admin item form shall prevent adding a badge with a label that already exists on the same gallery item, displaying a message indicating the duplicate.
+- **FR-020**: The admin gallery page shall be protected by a route middleware that verifies the user's role. The middleware reads the cached role from the user store; if the user is not authenticated (`role` is null/undefined), the system redirects to `/login`; if the user is authenticated but not an admin, the system redirects to `/` and displays a toast notification `'您無此頁面權限, 即將為您導回首頁'`.
 
 ### Key Entities
 
@@ -188,7 +190,11 @@ As an **admin**, I want to delete gallery items that are no longer needed so tha
 
 ## Assumptions
 
-1. **Authentication is pre-existing**: A login and access-control system is already in place. This feature assumes the admin pages are protected behind an existing authentication gate.
+1. **Authentication is pre-existing; admin guard is new**: Supabase authentication (@nuxtjs/supabase) is already configured and provides user login. Role-based access control requires new infrastructure:
+   - **Database tables (pre-existing in Supabase)**: `profiles` table (`id: uuid PK`, `userId: uuid FK→auth.users.id`, `roleId: text FK→roles.id`) and `roles` table (`id: text PK` e.g. `'admin'`, `'user'`; `created_at: timestamptz`).
+   - **User store (new)**: A Pinia setup store (`app/stores/userStore.ts`) caches the authenticated user's `roleId` after login. The login page fetches the user's profile from `profiles` using `userId` and stores the `roleId`.
+   - **Route middleware (new)**: An `auth` middleware (`app/middleware/auth.ts`) reads `roleId` from `userStore`. If `roleId` is `null`/`undefined`, redirect to `/login`. If `roleId` is not `'admin'`, redirect to `/` with toast `'您無此頁面權限, 即將為您導回首頁'`.
+   - **Page guard**: Admin gallery page uses `definePageMeta({ middleware: 'auth' })` to activate the middleware.
 2. **Image hosting via Supabase storage**: Images are uploaded by admins through the form. The system stores them in Supabase storage and persists the resulting public URL in the gallery item record. Admins do not manually enter image URLs.
 3. **Single language**: The gallery interface and admin panel are presented in a single language (Traditional Chinese based on the PRD) and do not require localization support at this time.
 4. **Badge colors are system-defined**: The palette of available badge colors is defined and maintained by the system. Admins cannot create custom colors outside this palette.
@@ -210,9 +216,9 @@ As an **admin**, I want to delete gallery items that are no longer needed so tha
 - **SC-003**: Clicking any gallery item opens a detail view that displays all required information (high-resolution image, title, badges, creation date, prompt) — with zero fields missing or blank for a fully populated item.
 - **SC-004**: The "Copy Prompt" action copies the exact prompt text to the clipboard (verified by paste comparison), and a visual confirmation is displayed within 1 second of clicking.
 - **SC-005**: When the gallery has zero active items, the empty-state message is displayed instead of a blank or broken page.
-- **SC-006**: When a gallery item's image URL is invalid or unreachable, the fallback placeholder image is displayed in both the list and detail views — no broken image icons appear.
+- **SC-006**: When a gallery item's image URL is empty or unreachable, the text `'尚未設定圖片'` is displayed in both the list and detail views — no broken image icons appear.
 - **SC-007**: An admin can view the complete inventory of gallery items (active and inactive) on the management page, with each item displaying thumbnail, title, creation date, and status.
-- **SC-008**: An admin can toggle an item's active status directly from the list, with a confirmation step for deactivation, and the change is reflected on the public gallery within 5 seconds.
+- **SC-008**: An admin can toggle an item's active status via the edit form, with a confirmation step for deactivation, and the change is reflected on both the admin list and the public gallery within 5 seconds.
 - **SC-009**: An admin can successfully create a new gallery item by filling all required fields, adding badges, and setting status — the item appears in the admin list and (if active) on the public gallery immediately after saving.
 - **SC-010**: Submitting the admin form with any required field left empty is blocked, and the user receives clear, field-specific validation messages indicating what needs to be corrected.
 - **SC-011**: Deleting a gallery item requires confirmation, and upon confirmation the item is permanently removed from both the admin list and the public gallery.

@@ -11,8 +11,8 @@
 | ---------------- | ---------------- |
 | Bucket name      | `images`         |
 | Access           | Public           |
-| Allowed MIME     | `image/*`        |
-| Max file size    | 5 MB (enforced client-side) |
+| Allowed MIME     | `image/webp`     |
+| Max file size    | 2 MB (enforced client-side) |
 
 ---
 
@@ -26,7 +26,7 @@ nbp-{timestamp}.{extension}
 
 **Examples**:
 - `nbp-20260112171244653.webp`
-- `nbp-1741234567890.png`
+- `nbp-1741234567890.webp`
 
 **Generation logic**:
 
@@ -195,14 +195,14 @@ Enforce these constraints via `useFileUpload` before attempting an upload:
 
 ```typescript
 const { files: uploadFiles, open, reset } = useFileUpload({
-  accept: 'image/*',
+  accept: 'image/webp',
   maxFiles: 1,
-  maxSize: 5 * 1024 * 1024, // 5 MB
+  maxSize: 2 * 1024 * 1024, // 2 MB
 })
 ```
 
 | Constraint      | Value                              | Enforced by         |
 | --------------- | ---------------------------------- | ------------------- |
-| File type       | `image/*` (PNG, JPG, WebP, etc.)   | `useFileUpload`     |
+| File type       | `image/webp` (.webp only)          | `useFileUpload`     |
 | Max file count  | 1                                  | `useFileUpload`     |
-| Max file size   | 5 MB                               | `useFileUpload`     |
+| Max file size   | 2 MB                               | `useFileUpload`     |

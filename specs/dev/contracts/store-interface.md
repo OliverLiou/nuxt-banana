@@ -39,7 +39,7 @@ import type { BadgeProps } from '#ui/types'
 type BadgeColor = BadgeProps['color']
 
 interface GalleryFormState {
-  id?: number
+  id?: string
   title: string | null
   image_url: string | null
   upload_image: File | null
@@ -63,7 +63,7 @@ export const useGalleryStore = defineStore('gallery', () => {
 
   // ── Form / Slideover State ──
   const slideoverOpen = ref(false)            // Controls USlideover visibility
-  const editingId = ref<number | null>(null)  // ID of item being edited (null = create mode)
+  const editingId = ref<string | null>(null)  // ID of item being edited (null = create mode)
   const formState = ref<GalleryFormState>(getDefaultFormState())
 
   // ── Getters (computed) ──
@@ -88,7 +88,7 @@ export const useGalleryStore = defineStore('gallery', () => {
 | `adminPending`  | `boolean`               | `false`          | Admin           | Loading indicator for admin operations         |
 | `adminError`    | `string \| null`        | `null`           | Admin           | Error message from admin operations            |
 | `slideoverOpen` | `boolean`               | `false`          | Admin           | USlideover open/close state                    |
-| `editingId`     | `number \| null`        | `null`           | Admin           | Item ID being edited; `null` = create mode     |
+| `editingId`     | `string \| null`        | `null`           | Admin           | Item ID being edited; `null` = create mode     |
 | `formState`     | `GalleryFormState`      | (default below)  | Admin           | Reactive form state for create/edit            |
 | `isEditMode`    | `boolean` (computed)    | —                | Admin           | `true` when `editingId !== null`               |
 
@@ -135,7 +135,7 @@ function getDefaultFormState(): GalleryFormState {
 | `setAdminError`              | `(msg: string \| null) => void`                        | Set admin error state                    |
 | `addItem`                    | `(item: GalleryItem) => void`                          | Add newly created item to `allItems`     |
 | `updateItemInList`           | `(item: GalleryItem) => void`                          | Update an item in `allItems` by id       |
-| `removeItem`                 | `(id: number) => void`                                 | Remove an item from `allItems` by id     |
+| `removeItem`                 | `(id: string) => void`                                 | Remove an item from `allItems` by id     |
 
 ### Form / Slideover Actions
 
@@ -174,7 +174,7 @@ function updateItemInList(updated: GalleryItem) {
   if (idx !== -1) allItems.value[idx] = updated
 }
 
-function removeItem(id: number) {
+function removeItem(id: string) {
   allItems.value = allItems.value.filter(i => i.id !== id)
 }
 
@@ -246,3 +246,70 @@ const store = useGalleryStore()
 2. **Form state in store**: Keeps the slideover form state centralized so the composable, page component, and slideover component can all access it without prop drilling.
 3. **Optimistic local updates**: After successful CRUD operations, the composable updates the store locally (`addItem`, `updateItemInList`, `removeItem`) rather than re-fetching the full list, for instant UI feedback.
 4. **Separate pending/error per context**: Public and admin have independent loading/error states to avoid conflicts when both views are potentially active.
+
+---
+
+## User Store: `useUserStore`
+
+> Store: `useUserStore` defined via `defineStore('user', () => { ... })`.
+> Location: `app/stores/userStore.ts` — **NEW FILE**
+
+### State
+
+```typescript
+// app/stores/userStore.ts — new store
+import { defineStore } from 'pinia'
+
+export const useUserStore = defineStore('user', () => {
+  const role = ref<string | null>(null)
+
+  const isAdmin = computed(() => role.value === 'admin')
+
+  async function fetchRole() {
+    const supabase = useSupabaseClient()
+    const user = useSupabaseUser()
+    if (!user.value) {
+      role.value = null
+      return
+    }
+    const { data } = await supabase
+      .from('profiles')
+      .select('roleId')
+      .eq('userId', user.value.id)
+      .single()
+    role.value = data?.roleId ?? null
+  }
+
+  function clearRole() {
+    role.value = null
+  }
+
+  return { role, isAdmin, fetchRole, clearRole }
+})
+```
+
+### Contract Summary
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `role` | `Ref<string \| null>` | `null` | Cached `roleId` from `profiles` table |
+| `isAdmin` | `ComputedRef<boolean>` | `false` | `true` when `role === 'admin'` |
+
+| Action | Signature | Description |
+|--------|-----------|-------------|
+| `fetchRole` | `() => Promise<void>` | Query `profiles` by auth user ID → set `role` |
+| `clearRole` | `() => void` | Reset `role` to `null` (call on logout) |
+
+### Usage Pattern
+
+```typescript
+// In login page (after successful auth):
+const userStore = useUserStore()
+await userStore.fetchRole()
+
+// In logout handler:
+userStore.clearRole()
+
+// In middleware or components:
+if (!userStore.isAdmin) { navigateTo('/') }
+```

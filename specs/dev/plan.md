@@ -1,59 +1,42 @@
 # Implementation Plan: Gallery Management
 
-**Branch**: `dev` | **Date**: 2026-03-05 | **Spec**: [specs/dev/spec.md](spec.md)
+**Branch**: `dev` | **Date**: 2026-03-09 | **Spec**: [spec.md](spec.md)
 **Input**: Feature specification from `/specs/dev/spec.md`
+**Updated**: 2026-03-09 — Refined per user's updated UI implementation plan (`.specify/sdd-docs/plan.md`)
 
 ## Summary
 
-Gallery Management feature implementing a public gallery page (browse active items with infinite scroll, detail modal, copy prompt) and an admin management page (CRUD operations via UTable + USlideover + UForm, image upload to Supabase Storage, inline status toggle). Uses @nuxt/ui v4 components with Supabase backend for data persistence and image storage.
+Gallery management system with two surfaces: (1) a public gallery page for visitors to browse active artwork using `UScrollArea` with responsive orientation, `UBlogPost` cards (title + image props only; badges rendered via `#badge` slot, `@error` handler for image fallback), detail modal, and prompt copying; (2) an admin management page with `UTable` (read-only `USwitch` for isActive display, conditional text for image fallback), `USlideover` + `UForm` for create/edit, and inline badge editing via nested `UTable` with `h()` render functions. Admin access is protected by a route middleware reading from `userStore` (backed by `profiles`/`roles` tables in Supabase).
 
-Detailed UI implementation plan available at `.specify/sdd-docs/plan.md`.
+**Key changes from v1 plan**: GalleryItem `id` is UUID (string, not number); `USwitch` in admin table is `disabled: true` (display only — toggle via edit form); upload restricted to `.webp` only, max 2MB; `UBlogPost` uses only `title` and `image` props (no description/date/variant); two icon-only buttons in footer (copy + detail view); badges JSONB is nullable at DB level; image fallback split — `@error` handler on UBlogPost and detail modal `<img>`, conditional text in admin UTable; admin auth uses `profiles`/`roles` tables → `userStore` → `auth` middleware → `definePageMeta`.
 
 ## Technical Context
 
-**Language/Version**: TypeScript (strict), Vue 3.5+, Nuxt 4.3+  
-**Primary Dependencies**: @nuxt/ui v4.4+, @nuxtjs/supabase v2.0.3, @pinia/nuxt v0.11.3, TailwindCSS 4  
-**Storage**: Supabase (PostgreSQL for data, Supabase Storage for images)  
-**Testing**: No-Test Policy (per constitution — no tests required)  
-**Target Platform**: Web SPA (SSR disabled in nuxt.config.ts)  
-**Project Type**: Web application (single Nuxt project, fullstack via Supabase)  
-**Performance Goals**: Standard web performance (< 2s scroll-load batch, responsive UI at 60fps)  
-**Constraints**: Dependencies locked (no new npm packages), brownfield preservation (additive changes only), @nuxt/ui components preferred  
-**Scale/Scope**: Small gallery (< 1000 items), single admin role, single language (Traditional Chinese)
+**Language/Version**: TypeScript (strict mode), Vue 3 (Composition API, `<script setup>`)
+**Primary Dependencies**: Nuxt 4.3+, @nuxt/ui v4.4+, @nuxtjs/supabase v2.0.3, @pinia/nuxt v0.11.3, TailwindCSS 4
+**Storage**: Supabase PostgreSQL (`gallery_items`, `profiles`, `roles` tables), Supabase Storage (`images` bucket)
+**Testing**: None (Constitution VIII: No-Test Policy)
+**Target Platform**: SPA (`ssr: false`), modern browsers
+**Project Type**: Web application (Nuxt 4 SPA)
+**Performance Goals**: N/A (no specific performance targets)
+**Constraints**: Dependency lock (no new npm packages), brownfield preservation, all changes additive
+**Scale/Scope**: Small gallery app, single admin role, ~100s of items, 2 pages
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-| # | Principle | Status | Justification |
-|---|-----------|--------|---------------|
-| I | Brownfield Preservation (NON-NEGOTIABLE) | ✅ PASS | All changes are additive: new pages (gallery, admin), new/extended components, extending existing store/composable. No existing code modified. |
-| II | Dependency Lock (NON-NEGOTIABLE) | ✅ PASS | All needed packages already in package.json: @nuxt/ui v4.4+, @nuxtjs/supabase, @pinia/nuxt, TailwindCSS 4. |
-| III | UI-First Development | ✅ PASS | Using @nuxt/ui components exclusively (UScrollArea, UBlogPost, UTable, UForm, USlideover, UBadge, UButton, USwitch, UFileUpload, UToast). nuxt-ui skill will be invoked. |
-| IV | TypeScript Strictness | ✅ PASS | GalleryItem interface already defined in shared/types/index.d.ts. Will maintain strict typing. |
-| V | Nuxt Auto-Import Convention | ✅ PASS | Existing code already uses auto-imports (useSupabaseClient, useAsyncData, etc.). |
-| VI | Component Standards | ✅ PASS | PascalCase naming, template→script→style block order enforced. |
-| VII | Pinia Setup Stores | ✅ PASS | galleryStore.ts already uses defineStore with setup function pattern. |
-| VIII | No-Test Policy | ✅ PASS | No test files will be generated. |
-
-**No violations. Gate PASSES.**
-
-### Post-Design Re-Evaluation (after Phase 1 artifacts)
-
-*Re-checked against: plan.md, data-model.md, contracts/\*, quickstart.md, research.md*
-
-| # | Principle | Status | Justification |
-|---|-----------|--------|---------------|
-| I | Brownfield Preservation (NON-NEGOTIABLE) | ✅ PASS | All new pages/components/composables are additive. Existing `galleryStore.ts` and `useGallery.ts` are extended (new state/actions appended), not rewritten. Existing `setItems`/`setPending`/`setError` preserved. |
-| II | Dependency Lock (NON-NEGOTIABLE) | ✅ PASS | All referenced packages are in `package.json`: @nuxt/ui, @nuxtjs/supabase, @pinia/nuxt, tailwindcss, vue, vue-router, nuxt. `@tanstack/vue-table` types and VueUse composables (`useInfiniteScroll`, `useBreakpoints`) are transitive dependencies of @nuxt/ui — no new installs required. |
-| III | UI-First Development | ✅ PASS | Artifacts use @nuxt/ui exclusively: UScrollArea, UBlogPost, UBadge, UButton, UTable, USwitch, USlideover, UForm, UFormField, UInput, UTextarea, UFileUpload, USelect, UModal. No custom UI primitives reinvented. |
-| IV | TypeScript Strictness | ✅ PASS | All entities have explicit interfaces: `GalleryItem`, `Badge`, `GalleryFormState`, `CreateItemInput`, `UpdateItemInput`. `BadgeColor` derived from `BadgeProps['color']`. No `any` types. All function signatures typed. |
-| V | Nuxt Auto-Import Convention | ✅ PASS | Composables (`useSupabaseClient`, `useToast`, `useGalleryStore`, `ref`, `computed`, `toRef`) used without imports. Only necessary type imports (`FormError`, `BadgeProps`, `ColumnDef`) are explicit. **Advisory**: quickstart/research examples show `import { h, resolveComponent } from 'vue'` — these are auto-imported in Nuxt 4; implementation must omit those import lines. |
-| VI | Component Standards | ✅ PASS | All new components use PascalCase: `GalleryDetail.vue`, `GalleryForm.vue`. Block order (template → script → style) mandated in quickstart checklist. |
-| VII | Pinia Setup Stores | ✅ PASS | Store contract uses `defineStore('gallery', () => { ... })` setup pattern exclusively. No options-style stores. |
-| VIII | No-Test Policy | ✅ PASS | Zero test files referenced in any artifact. Plan explicitly states "No-Test Policy". |
-
-**Post-design re-evaluation: ALL 8 principles PASS. No violations.**
+| # | Principle | Status | Notes |
+|---|-----------|--------|-------|
+| I | Brownfield Preservation | ✅ PASS | Changes are additive: extend existing store/composables/types; new files: `userStore.ts`, `auth.ts` middleware; no existing code removed |
+| II | Dependency Lock | ✅ PASS | All dependencies already in package.json |
+| III | UI-First Development | ✅ PASS | Uses @nuxt/ui: UBlogPost, UTable, UForm, USlideover, UBadge, UButton, USwitch, UScrollArea, UModal, UFileUpload, USelect, UInput, UTextarea |
+| IV | TypeScript Strictness | ✅ PASS | All types defined: GalleryItem (id: string/uuid), Badge, GalleryFormState, BadgeColor |
+| V | Nuxt Auto-Import Convention | ✅ PASS | Uses auto-imported composables (ref, computed, useRoute, useToast, etc.) |
+| VI | Component Standards | ✅ PASS | PascalCase names, template → script → style block order |
+| VII | Pinia Setup Stores | ✅ PASS | Uses defineStore with setup function pattern for both `galleryStore` and new `userStore` |
+| VIII | No-Test Policy | ✅ PASS | No test files generated |
+| IX | Code Reusability (DRY) | ✅ PASS | resolveComponent cached for reuse; shared composables; getDefaultFormState utility |
 
 ## Project Structure
 
@@ -61,44 +44,49 @@ Detailed UI implementation plan available at `.specify/sdd-docs/plan.md`.
 
 ```text
 specs/dev/
-├── plan.md              # This file (/speckit.plan command output)
-├── spec.md              # Feature specification
-├── research.md          # Phase 0 output (/speckit.plan command)
-├── data-model.md        # Phase 1 output (/speckit.plan command)
-├── quickstart.md        # Phase 1 output (/speckit.plan command)
-├── contracts/           # Phase 1 output (/speckit.plan command)
-└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+├── plan.md              # This file
+├── research.md          # Phase 0 output (component API research)
+├── data-model.md        # Phase 1 output (entities, schema, types)
+├── quickstart.md        # Phase 1 output (developer guide)
+├── contracts/           # Phase 1 output (interface contracts)
+│   ├── composable-interface.md
+│   ├── store-interface.md
+│   ├── supabase-database.md
+│   └── supabase-storage.md
+└── tasks.md             # Phase 2 output (generated by /speckit.tasks)
 ```
 
 ### Source Code (repository root)
 
 ```text
 app/
-├── app.vue              # Root app with UApp, UContainer, logout button
-├── assets/
-│   └── css/main.css
-├── components/
-│   └── PostCard.vue     # Existing card component (may be extended or replaced)
-├── composables/
-│   └── useGallery.ts    # Gallery data composable (currently mock data)
 ├── pages/
-│   ├── index.vue        # Landing page with marquee gallery preview
-│   ├── gallery.vue      # NEW — Public gallery page (browse, detail modal, copy prompt)
-│   ├── admin.vue        # NEW — Admin management page (CRUD, image upload, status toggle)
-│   ├── login/           # Existing login page
-│   └── confirm/         # Existing auth confirm page
+│   ├── gallery.vue              # Public gallery page (UScrollArea + UBlogPost)
+│   ├── login.vue                # Login page (fetches profile → updates userStore)
+│   └── admin/
+│       └── gallery.vue          # Admin CRUD management (UTable + USlideover)
+├── components/
+│   ├── GalleryDetail.vue        # Detail modal (UModal with full item data)
+│   └── GalleryForm.vue          # Admin form inside USlideover (UForm)
+├── composables/
+│   ├── useGallery.ts            # Public gallery data (extend existing)
+│   └── useGalleryAdmin.ts       # Admin CRUD operations (new)
+├── middleware/
+│   └── auth.ts                  # Route middleware: check userStore.role, redirect
 └── stores/
-    └── galleryStore.ts  # Pinia setup store for gallery items (extend with CRUD actions)
+    ├── galleryStore.ts          # Pinia store (extend existing)
+    └── userStore.ts             # Pinia store: user role cache (new)
 
 shared/
-└── types/
-    └── index.d.ts       # GalleryItem global type definition
+├── types/
+│   ├── index.d.ts               # GalleryItem global type (id: string for UUID)
+│   └── index.ts                 # Badge, GalleryFormState, BadgeColor exports
+└── utils/
+    └── gallery.ts               # getDefaultFormState helper
 ```
 
-**Structure Decision**: Single Nuxt project (no monorepo). New gallery page and admin page will be added under `app/pages/`. New components under `app/components/`. Extend existing store and composable.
+**Structure Decision**: Nuxt 4 app directory convention. No backend — all data access via client-side Supabase SDK. Single project structure with shared types.
 
 ## Complexity Tracking
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
-
-No violations identified.
+> No constitution violations detected. No complexity justifications needed.

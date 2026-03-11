@@ -12,6 +12,8 @@
 | **GalleryItem** | Core entity | `gallery_items` table (Supabase) | Single artwork entry in the gallery |
 | **Badge** | Embedded value object | JSONB column within `gallery_items` | Categorization tag on a GalleryItem |
 | **GalleryFormState** | Client-only type | Pinia store / component state | Reactive form state for create/edit flows |
+| **Profile** | Auth entity | `profiles` table (Supabase) | Maps authenticated user to their role |
+| **Role** | Auth entity | `roles` table (Supabase) | Defines available user roles (admin, user) |
 
 ---
 
@@ -25,13 +27,15 @@ Represents a single artwork entry in the gallery system. Displayed on both the p
 
 | Field | Type | Required | Default | Constraints | Notes |
 |---|---|---|---|---|---|
-| `id` | `number` | Auto | — | Primary key, auto-increment | Supabase-generated, never set by client |
+| `id` | `string` | Auto | — | Primary key, UUID | Supabase-generated (`gen_random_uuid()`), never set by client |
 | `title` | `string` | ✅ | — | Non-empty after trim | Display title of the artwork |
 | `image_url` | `string` | ✅ | — | Valid URL pointing to Supabase Storage public object | System-generated from upload; admin never enters manually |
 | `prompt` | `string` | ✅ | — | Non-empty after trim; may contain Unicode, special chars, newlines, very long text | The generative AI prompt associated with the artwork |
 | `badges` | `Badge[]` | ✅ | `[]` | Min 1, max 10 items; labels unique per item | Stored as JSONB array in Supabase |
 | `isActive` | `boolean` | — | `true` | — | Controls public gallery visibility |
 | `created_at` | `string` (ISO 8601 timestamp) | Auto | `now()` | Immutable after creation | Used for default sort order (DESC) |
+
+> **Badges nullable policy**: The `badges` JSONB column is nullable at the database level to maintain backwards compatibility with historical data. All `badges.length >= 1` validation is enforced exclusively at the UI form layer (`GalleryForm.vue`). Database queries and API responses may return items with `null` or empty badges arrays — consuming code must handle both cases gracefully.
 
 ### Relationships
 
@@ -110,11 +114,11 @@ Client-side reactive type used for the admin create/edit form (`USlideover` + `U
 
 | Field | Type | Required (Create) | Required (Edit) | Default | Notes |
 |---|---|---|---|---|---|
-| `id` | `number \| undefined` | — | Present | `undefined` | `undefined` = create mode; number = edit mode |
-| `title` | `string` | ✅ | ✅ | `''` | Bound to `UInput` via `v-model` |
-| `image_url` | `string` | — | ✅ | `''` | Populated from existing record in edit mode |
+| `id` | `string \| undefined` | — | Present | `undefined` | `undefined` = create mode; string (UUID) = edit mode |
+| `title` | `string \| null` | ✅ | ✅ | `null` | Bound to `UInput` via `v-model` |
+| `image_url` | `string \| null` | — | ✅ | `null` | Populated from existing record in edit mode |
 | `upload_image` | `File \| null` | ✅ | — | `null` | New image file selected via `UFileUpload` |
-| `prompt` | `string` | ✅ | ✅ | `''` | Bound to `UTextarea` via `v-model` |
+| `prompt` | `string \| null` | ✅ | ✅ | `null` | Bound to `UTextarea` via `v-model` |
 | `badges` | `Badge[]` | ✅ (≥1) | ✅ (≥1) | `[]` | Managed via inline add/remove UI |
 | `isActive` | `boolean` | — | — | `true` | Bound to `USwitch` via `v-model` |
 
@@ -166,17 +170,58 @@ Toast success → close USlideover → refresh store
 
 ---
 
+## 4. Profile
+
+### Purpose
+
+Maps a Supabase authenticated user to their application role. The `profiles` table already exists in Supabase and is not created by this feature. Used by the auth middleware to determine whether a user has admin access to the gallery management page.
+
+### Fields
+
+| Field | Type | Required | Constraints | Notes |
+|---|---|---|---|---|
+| `id` | `string` (UUID) | Auto | Primary key | Supabase-generated |
+| `userId` | `string` (UUID) | ✅ | Foreign key → `auth.users.id` | Links to the Supabase auth user |
+| `roleId` | `string` | ✅ | Foreign key → `roles.id` | Role identifier (e.g., `'admin'`, `'user'`) |
+
+### Relationships
+
+- **References** → `auth.users` via `userId`
+- **References** → `Role` via `roleId`
+- **Read by** → `userStore` on login to cache role
+
+---
+
+## 5. Role
+
+### Purpose
+
+Defines the available user roles in the system. The `roles` table already exists in Supabase and is not created by this feature. Currently two roles: `'admin'` (full gallery management access) and `'user'` (public gallery access only).
+
+### Fields
+
+| Field | Type | Required | Default | Constraints | Notes |
+|---|---|---|---|---|---|
+| `id` | `string` | ✅ | — | Primary key | Role identifier (e.g., `'admin'`, `'user'`) |
+| `created_at` | `string` (ISO 8601) | Auto | `now()` | Immutable | Record creation timestamp |
+
+### Relationships
+
+- **Referenced by** → `Profile.roleId`
+
+---
+
 ## Supabase Table Schema
 
 ### `gallery_items` Table
 
 ```sql
 CREATE TABLE gallery_items (
-  id          BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title       TEXT NOT NULL,
   image_url   TEXT NOT NULL,
   prompt      TEXT NOT NULL,
-  badges      JSONB NOT NULL DEFAULT '[]'::jsonb,
+  badges      JSONB DEFAULT '[]'::jsonb,  -- nullable at DB level; UI form enforces ≥1 badge
   "isActive"  BOOLEAN NOT NULL DEFAULT true,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -205,15 +250,36 @@ Each element in the `badges` array is a JSON object:
 - Maximum 10 elements enforced at the application layer
 - Label uniqueness enforced at the application layer
 
-### Supabase Storage — `images` Bucket
+### `profiles` Table (Pre-existing)
+
+```sql
+-- Already exists in Supabase — NOT created by this feature
+CREATE TABLE profiles (
+  id        UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  "userId"  UUID NOT NULL REFERENCES auth.users(id),
+  "roleId"  TEXT NOT NULL REFERENCES roles(id)
+);
+```
+
+### `roles` Table (Pre-existing)
+
+```sql
+-- Already exists in Supabase — NOT created by this feature
+CREATE TABLE roles (
+  id          TEXT PRIMARY KEY,  -- e.g., 'admin', 'user'
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+
+### Supabase Storage— `images` Bucket
 
 | Property | Value |
 |---|---|
 | Bucket name | `images` |
 | Access | Public (public URLs served directly) |
 | File naming | `nbp-{timestamp}.{ext}` (e.g. `nbp-20260112171244653.webp`) |
-| Allowed types | `image/*` (PNG, JPG, WebP) |
-| Max file size | 5 MB (enforced by `useFileUpload` on client) |
+| Allowed types | `.webp` only (`image/webp`) |
+| Max file size | 2 MB (enforced by `useFileUpload` on client) |
 | URL pattern | `https://<project-ref>.supabase.co/storage/v1/object/public/images/<filename>` |
 
 ---
@@ -228,12 +294,12 @@ type BadgeColor = BadgeProps['color']
 
 declare global {
   interface GalleryItem {
-    id: number
+    id: string
     image_url: string
     title: string
     prompt: string
     badges: { label: string; color: BadgeColor }[]
-    created_at: timestamp
+    created_at: string
     isActive: boolean
   }
 }
@@ -256,11 +322,11 @@ interface Badge {
 
 /** Reactive form state for admin create/edit USlideover */
 interface GalleryFormState {
-  id?: number
-  title: string
-  image_url: string
+  id?: string
+  title: string | null
+  image_url: string | null
   upload_image: File | null
-  prompt: string
+  prompt: string | null
   badges: Badge[]
   isActive: boolean
 }
@@ -269,10 +335,10 @@ interface GalleryFormState {
 function getDefaultFormState(): GalleryFormState {
   return {
     id: undefined,
-    title: '',
-    image_url: '',
+    title: null,
+    image_url: null,
     upload_image: null,
-    prompt: '',
+    prompt: null,
     badges: [],
     isActive: true,
   }
@@ -327,6 +393,27 @@ The store will be extended or a separate admin composable will manage:
 
 > **Note**: The existing composable `useGallery.ts` wraps store mutations in `useAsyncData()` with `server: false`. Admin CRUD operations will follow the same Supabase client pattern (`useSupabaseClient()`) with toast notifications for feedback.
 
+### User Store (`app/stores/userStore.ts`) — New
+
+```ts
+// New store — to be created
+{
+  role: string | null       // cached roleId from profiles table (e.g., 'admin', 'user', null if not fetched)
+}
+```
+
+**Actions:**
+
+```ts
+{
+  fetchRole: () => Promise<void>   // Fetch profile by auth user id → set role from roleId
+  clearRole: () => void            // Reset role to null (on logout)
+  isAdmin: ComputedRef<boolean>    // Computed: role === 'admin'
+}
+```
+
+> **Note**: `fetchRole()` queries `profiles` table using `useSupabaseClient().from('profiles').select('roleId').eq('userId', user.id).single()`. Called after successful login on the login page. `clearRole()` is called on logout.
+
 ---
 
 ## Constants
@@ -342,10 +429,10 @@ const GALLERY_PAGE_SIZE = 12
 const STORAGE_BUCKET = 'images'
 
 /** Allowed image MIME types for upload */
-const ALLOWED_IMAGE_TYPES = 'image/*'
+const ALLOWED_IMAGE_TYPES = 'image/webp'
 
-/** Max upload file size in bytes (5 MB) */
-const MAX_UPLOAD_SIZE = 5 * 1024 * 1024
+/** Max upload file size in bytes (2 MB) */
+const MAX_UPLOAD_SIZE = 2 * 1024 * 1024
 ```
 
 ---
@@ -357,12 +444,13 @@ const MAX_UPLOAD_SIZE = 5 * 1024 * 1024
 | FR-001: Public shows only active | `GalleryItem.isActive` | Supabase query `.eq('isActive', true)` |
 | FR-002: Sorted newest first | `GalleryItem.created_at` | Supabase query `.order('created_at', { ascending: false })` |
 | FR-003: Infinite scroll | `GalleryItem` list | `.range(from, to)` pagination |
-| FR-004: Display thumbnail, title, badges | `GalleryItem.image_url`, `.title`, `.badges` | UBlogPost prop binding |
+| FR-004: Display thumbnail, title, badges | `GalleryItem.image_url`, `.title`, `.badges` | UBlogPost prop binding (title, image) + `#badge` slot |
 | FR-005: Detail modal | All `GalleryItem` fields | Modal reads from item object |
 | FR-006: Copy prompt | `GalleryItem.prompt` | Clipboard API |
 | FR-009: Admin shows all items | `GalleryItem.isActive` (both true/false) | Supabase query without `.eq('isActive', true)` |
-| FR-010: Inline toggle | `GalleryItem.isActive` | USwitch + Supabase update |
+| FR-010: Status display / edit-form toggle | `GalleryItem.isActive` | USwitch in edit form only (disabled in admin table); Supabase update |
 | FR-012: Required fields | `GalleryFormState.title`, `.prompt`, `.upload_image`/`.image_url` | Custom validation function |
 | FR-013: Badge add with color | `Badge.label`, `Badge.color` | UInput + USelect |
 | FR-018: Max 10 badges | `GalleryItem.badges` | Application-layer length check |
 | FR-019: No duplicate badge labels | `Badge.label` uniqueness per item | Application-layer duplicate check |
+| FR-020: Admin auth middleware | `Profile.roleId`, `Role.id` | Route middleware reads `userStore.role`; redirect based on value |
