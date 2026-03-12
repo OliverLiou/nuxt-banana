@@ -8,7 +8,9 @@ description: "Task list template for feature implementation"
 **Input**: Design documents from `/specs/[###-feature-name]/`
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: The examples below include test tasks. Tests are OPTIONAL - only include them if explicitly requested in the feature specification.
+**Tests**: The examples below include test tasks. Tests are OPTIONAL - only include them if
+explicitly requested in the feature specification or required to safely verify changed
+behavior.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -20,10 +22,14 @@ description: "Task list template for feature implementation"
 
 ## Path Conventions
 
-- **Single project**: `src/`, `tests/` at repository root
-- **Web app**: `backend/src/`, `frontend/src/`
-- **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- Paths shown below assume single project - adjust based on plan.md structure
+- `app/pages/` for route components
+- `app/components/` for reusable UI
+- `app/composables/` for reusable logic
+- `app/stores/` for Pinia setup stores
+- `shared/` for shared types or utilities
+- `public/` for static assets
+- Use exact repository paths from the approved plan and do not add new top-level folders unless
+  the user has approved a brownfield exception
 
 <!-- 
   ============================================================================
@@ -48,9 +54,11 @@ description: "Task list template for feature implementation"
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create project structure per implementation plan
-- [ ] T002 Initialize [language] project with [framework] dependencies
-- [ ] T003 [P] Configure linting and formatting tools
+- [ ] T001 Review the approved plan, brownfield boundary, and affected repository paths
+- [ ] T002 Inventory existing components, composables, stores, and `@nuxt/ui` primitives to
+      reuse
+- [ ] T003 [P] Confirm the validation approach for this feature (`npm run build`, diagnostics,
+      manual checks, and any explicitly requested tests)
 
 ---
 
@@ -62,12 +70,14 @@ description: "Task list template for feature implementation"
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
-- [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T004 Define or update shared feature types in `shared/` or the local feature module
+- [ ] T005 [P] Add or update reusable composables in `app/composables/`
+- [ ] T006 [P] Add or update Pinia setup-store scaffolding in `app/stores/` when shared state
+      is required
+- [ ] T007 Establish required page, component, or middleware entry points in `app/pages/`,
+      `app/components/`, or `app/middleware/`
+- [ ] T008 Capture any approved exception to architecture or dependency rules before story work
+- [ ] T009 Document validation checkpoints for warnings, errors, and manual scenario coverage
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -83,17 +93,20 @@ Examples of foundational tasks (adjust based on your project):
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T010 [P] [US1] Add the requested test coverage in `[approved test path]`
+- [ ] T011 [P] [US1] Add a verification task for the primary user journey if automated coverage
+      was explicitly requested
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py
-- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py
-- [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)
-- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T016 [US1] Add validation and error handling
-- [ ] T017 [US1] Add logging for user story 1 operations
+- [ ] T012 [P] [US1] Create or update the route entry in `app/pages/[feature].vue`
+- [ ] T013 [P] [US1] Create or update reusable UI in `app/components/[Feature].vue`
+- [ ] T014 [P] [US1] Create or update reusable logic in `app/composables/use[Feature].ts`
+- [ ] T015 [US1] Update shared state in `app/stores/[feature].ts` when the story needs it
+- [ ] T016 [US1] Add explicit types for props, emits, store state, and API data
+- [ ] T017 [US1] Apply TailwindCSS and `@nuxt/ui` integration without duplicating existing
+      patterns
+- [ ] T018 [US1] Run diagnostics and fix warnings or errors introduced by the story
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -107,15 +120,15 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Tests for User Story 2 (OPTIONAL - only if tests requested) ⚠️
 
-- [ ] T018 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T019 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T019 [P] [US2] Add the requested test coverage in `[approved test path]`
+- [ ] T020 [P] [US2] Add a verification task for the secondary user journey if needed
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Create [Entity] model in src/models/[entity].py
-- [ ] T021 [US2] Implement [Service] in src/services/[service].py
-- [ ] T022 [US2] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T023 [US2] Integrate with User Story 1 components (if needed)
+- [ ] T021 [P] [US2] Create or update the route or component entry point for the story
+- [ ] T022 [P] [US2] Extend reusable composables or shared UI without breaking US1
+- [ ] T023 [US2] Update Pinia state, API wiring, and explicit types as required
+- [ ] T024 [US2] Validate the story independently and clear any diagnostics introduced
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -129,14 +142,15 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Tests for User Story 3 (OPTIONAL - only if tests requested) ⚠️
 
-- [ ] T024 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T025 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T025 [P] [US3] Add the requested test coverage in `[approved test path]`
+- [ ] T026 [P] [US3] Add a verification task for the user journey if needed
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Create [Entity] model in src/models/[entity].py
-- [ ] T027 [US3] Implement [Service] in src/services/[service].py
-- [ ] T028 [US3] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T027 [P] [US3] Create or update the route or component entry point for the story
+- [ ] T028 [P] [US3] Extract repeated logic into a composable or shared component
+- [ ] T029 [US3] Update state, types, and styling to complete the story
+- [ ] T030 [US3] Validate the story independently and clear any diagnostics introduced
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -150,12 +164,12 @@ Examples of foundational tasks (adjust based on your project):
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] TXXX [P] Documentation updates in docs/
-- [ ] TXXX Code cleanup and refactoring
-- [ ] TXXX Performance optimization across all stories
-- [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
-- [ ] TXXX Security hardening
-- [ ] TXXX Run quickstart.md validation
+- [ ] TXXX [P] Documentation updates in README.md or feature docs
+- [ ] TXXX Extract duplicated UI or logic into reusable components and composables
+- [ ] TXXX Re-run diagnostics and `npm run build`
+- [ ] TXXX [P] Add only the explicitly requested automated tests
+- [ ] TXXX Verify no new packages or constitution exceptions were introduced
+- [ ] TXXX Complete final manual validation for affected user flows
 
 ---
 
@@ -179,8 +193,7 @@ Examples of foundational tasks (adjust based on your project):
 ### Within Each User Story
 
 - Tests (if included) MUST be written and FAIL before implementation
-- Models before services
-- Services before endpoints
+- Shared types and reusable logic before dependent pages or components
 - Core implementation before integration
 - Story complete before moving to next priority
 
@@ -245,7 +258,9 @@ With multiple developers:
 - [P] tasks = different files, no dependencies
 - [Story] label maps task to specific user story for traceability
 - Each user story should be independently completable and testable
-- Verify tests fail before implementing
+- Verify requested tests fail before implementing
+- Default to existing components, composables, and `@nuxt/ui` before creating new abstractions
+- End each story with diagnostics cleanup and brownfield-safe validation
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence

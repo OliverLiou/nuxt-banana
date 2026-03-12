@@ -12,17 +12,6 @@ declare global {
     created_at: string
     isActive: boolean
   }
-
-  interface Profile {
-    id: string
-    userId: string
-    roleId: string
-  }
-
-  interface Role {
-    id: string
-    created_at: string
-  }
 }
 
 export {}

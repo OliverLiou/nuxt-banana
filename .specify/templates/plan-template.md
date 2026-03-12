@@ -3,7 +3,8 @@
 **Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
 **Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
+**Note**: This template is filled in by the `/speckit.plan` command and MUST comply with
+`.specify/memory/constitution.md`.
 
 ## Summary
 
@@ -17,21 +18,33 @@
   the iteration process.
 -->
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: TypeScript 5.x, Nuxt 4, Vue 3  
+**Primary Dependencies**: Nuxt 4, `@nuxt/ui`, `@nuxtjs/supabase`, `@pinia/nuxt`, TailwindCSS  
+**Storage**: Supabase/PostgreSQL when the feature touches persisted data; otherwise N/A  
+**Testing**: Automated tests optional by default; use manual validation, diagnostics, and the
+existing Nuxt build flow unless the spec explicitly requires tests  
+**Target Platform**: Browser-based Nuxt 4 web application  
+**Project Type**: Brownfield Nuxt 4 app rooted in `app/`, `public/`, and `shared/`  
+**Performance Goals**: Preserve current UX and loading behavior unless the spec defines a
+measurable target  
+**Constraints**: No new packages, no unsupported experimental syntax, reuse existing
+composables and components, TailwindCSS only, Pinia setup stores, explicit TypeScript
+contracts  
+**Scale/Scope**: Prefer surgical changes that fit the existing repository structure
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] Brownfield boundary is defined and no architectural or behavior change is planned without
+      explicit user approval.
+- [ ] Existing composables, components, and `@nuxt/ui` primitives to reuse are identified.
+- [ ] Route, styling, and state changes stay within `app/pages/`, TailwindCSS, and Pinia
+      setup-store conventions.
+- [ ] TypeScript contract updates for props, emits, state, and API data are identified.
+- [ ] Validation covers final diagnostics review and explains whether automated tests are
+      intentionally omitted or explicitly requested.
+- [ ] No new packages or version-incompatible syntax are required.
 
 ## Project Structure
 
@@ -56,43 +69,21 @@ specs/[###-feature]/
 -->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+app/
+├── app.vue
+├── assets/
+├── components/
+├── composables/
+├── middleware/
+├── pages/
+└── stores/
 
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+public/
+shared/
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Record the concrete repository paths affected by this feature and
+justify any new directory only when the user has approved a brownfield exception.
 
 ## Complexity Tracking
 
