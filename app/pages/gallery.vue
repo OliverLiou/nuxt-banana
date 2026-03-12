@@ -17,15 +17,18 @@
             v-for="item in items"
             :key="item.id"
             :title="item.title"
-            :description="item.prompt"
-            :date="formatDate(item.created_at)"
-            :image="item.image_url"
+            :image="item.image_url || undefined"
             orientation="vertical"
             variant="outline"
             class="cursor-pointer"
             :class="{ 'min-w-[280px]': !mdAndUp }"
             @click="openDetail(item)"
           >
+            <template v-if="!item.image_url" #image>
+              <div class="flex h-48 items-center justify-center bg-(--ui-bg-elevated) text-(--ui-text-muted)">
+                尚未設定圖片
+              </div>
+            </template>
             <template #badge>
               <div class="flex flex-wrap gap-1">
                 <UBadge
@@ -40,8 +43,8 @@
             <template #footer>
               <UButton
                 icon="i-lucide-copy"
-                label="複製提示詞"
-                variant="ghost"
+                variant="outline"
+                color="neutral"
                 size="sm"
                 @click.stop="copyPrompt(item.prompt)"
               />
@@ -80,15 +83,6 @@ useInfiniteScroll(
   () => loadMore(),
   { distance: 200 },
 )
-
-function formatDate(dateStr: string) {
-  if (!dateStr) return ''
-  return new Date(dateStr).toLocaleDateString('zh-TW', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  })
-}
 
 async function copyPrompt(prompt: string) {
   try {

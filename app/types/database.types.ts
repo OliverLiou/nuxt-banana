@@ -11,7 +11,7 @@ export interface Database {
     Tables: {
       gallery_items: {
         Row: {
-          id: number
+          id: string
           image_url: string
           title: string
           prompt: string
@@ -20,7 +20,7 @@ export interface Database {
           isActive: boolean
         }
         Insert: {
-          id?: number
+          id?: string
           image_url?: string | null
           title?: string | null
           prompt?: string | null
@@ -29,13 +29,46 @@ export interface Database {
           isActive?: boolean
         }
         Update: {
-          id?: number
+          id?: string
           image_url?: string | null
           title?: string | null
           prompt?: string | null
           badges?: Json
           created_at?: string
           isActive?: boolean
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          id: string
+          userId: string
+          roleId: string
+        }
+        Insert: {
+          id?: string
+          userId: string
+          roleId: string
+        }
+        Update: {
+          id?: string
+          userId?: string
+          roleId?: string
+        }
+        Relationships: []
+      }
+      roles: {
+        Row: {
+          id: string
+          created_at: string
+        }
+        Insert: {
+          id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
         }
         Relationships: []
       }

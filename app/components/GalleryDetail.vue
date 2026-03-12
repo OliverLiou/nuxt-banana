@@ -4,12 +4,16 @@
       <div v-if="item" class="space-y-4">
         <div class="overflow-hidden rounded-lg bg-(--ui-bg-elevated)">
           <img
+            v-if="item.image_url && !imageError"
             :src="item.image_url"
             :alt="item.title"
             class="max-h-[60vh] w-full object-contain"
             loading="lazy"
-            @error="onImageError"
+            @error="imageError = true"
           >
+          <div v-else class="flex h-48 items-center justify-center text-(--ui-text-muted)">
+            尚未設定圖片
+          </div>
         </div>
 
         <div class="flex flex-wrap gap-1.5">
@@ -57,6 +61,11 @@ const props = defineProps<{
 const open = defineModel<boolean>('open', { required: true })
 
 const toast = useToast()
+const imageError = ref(false)
+
+watch(() => props.item, () => {
+  imageError.value = false
+})
 
 function formatDate(dateStr: string) {
   if (!dateStr) return ''
@@ -65,10 +74,6 @@ function formatDate(dateStr: string) {
     month: '2-digit',
     day: '2-digit',
   })
-}
-
-function onImageError(e: Event) {
-  (e.target as HTMLImageElement).src = '/placeholder.png'
 }
 
 async function copyPrompt() {

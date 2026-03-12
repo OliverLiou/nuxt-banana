@@ -15,7 +15,7 @@
 import type { ButtonProps } from '@nuxt/ui'
 
 const supabase = useSupabaseClient()
-const user = useSupabaseUser()
+const session = useSupabaseSession()
 
 const providers = ref<ButtonProps[]>([
   {
@@ -27,12 +27,10 @@ const providers = ref<ButtonProps[]>([
   }
 ])
 
-watch(user, () => {
-  if (user.value) {
-    // Redirect to protected page
-    return navigateTo('/')
-  }
-})
+// Redirect to home if already logged in
+watch(session, (s) => {
+  if (s) navigateTo('/')
+}, { immediate: true })
 
 const signInWithGoogle = async () => {
   const { error } = await supabase.auth.signInWithOAuth({

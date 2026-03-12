@@ -3,12 +3,10 @@
 </template>
 
 <script setup lang="ts">
-const user = useSupabaseUser()
+const session = useSupabaseSession()
 
-watch(user, () => {
-  if (user.value) {
-      // Redirect to protected page
-      return navigateTo('/')
-  }
+// Redirect to home once session is established (role fetch handled by app.vue)
+watch(session, (s) => {
+  if (s) navigateTo('/')
 }, { immediate: true })
 </script>

@@ -100,9 +100,9 @@
 
 **Purpose**: Fix `GalleryItem.id` from `number` to `string` (UUID) and `GalleryFormState` field nullability (`string` → `string | null`) across all type definitions
 
-- [ ] T101 Fix `GalleryItem` interface in `shared/types/index.d.ts` — change `id: number` → `id: string`; change `created_at: timestamp` → `created_at: string`
-- [ ] T102 [P] Fix `GalleryFormState` type in `shared/types/index.ts` — change `id?: number` → `id?: string`; change `title: string` → `title: string | null`; change `image_url: string` → `image_url: string | null`; change `prompt: string` → `prompt: string | null` (per data-model.md GalleryFormState contract)
-- [ ] T103 [P] Verify `getDefaultFormState()` in `shared/utils/gallery.ts` — ensure `id` default is `undefined` (not `0`/`null`); change `title`, `image_url`, `prompt` defaults from `''` to `null` (per data-model.md GalleryFormState defaults)
+- [X] T101 Fix `GalleryItem` interface in `shared/types/index.d.ts` — change `id: number` → `id: string`; change `created_at: timestamp` → `created_at: string`
+- [X] T102 [P] Fix `GalleryFormState` type in `shared/types/index.ts` — change `id?: number` → `id?: string`; change `title: string` → `title: string | null`; change `image_url: string` → `image_url: string | null`; change `prompt: string` → `prompt: string | null` (per data-model.md GalleryFormState contract)
+- [X] T103 [P] Verify `getDefaultFormState()` in `shared/utils/gallery.ts` — ensure `id` default is `undefined` (not `0`/`null`); change `title`, `image_url`, `prompt` defaults from `''` to `null` (per data-model.md GalleryFormState defaults)
 
 ---
 
@@ -112,8 +112,8 @@
 
 **⚠️ CRITICAL**: Phase 10-A (type fixes) must complete first
 
-- [ ] T104 Fix `galleryStore.ts` in `app/stores/galleryStore.ts` — change `editingId: ref<number | null>(null)` → `ref<string | null>(null)`; verify `openEdit(item)` assigns `item.id` (now string) correctly; verify `removeItem(id)` parameter type is string
-- [ ] T105 [P] Fix `useGalleryAdmin.ts` in `app/composables/useGalleryAdmin.ts` — change all `itemId: number` parameters to `itemId: string` in `toggleActive()`, `deleteItem()`, and any other functions accepting item id; verify Supabase `.eq('id', itemId)` calls work with string UUID
+- [X] T104 Fix `galleryStore.ts` in `app/stores/galleryStore.ts` — change `editingId: ref<number | null>(null)` → `ref<string | null>(null)`; verify `openEdit(item)` assigns `item.id` (now string) correctly; verify `removeItem(id)` parameter type is string
+- [X] T105 [P] Fix `useGalleryAdmin.ts` in `app/composables/useGalleryAdmin.ts` — change all `itemId: number` parameters to `itemId: string` in `toggleActive()`, `deleteItem()`, and any other functions accepting item id; verify Supabase `.eq('id', itemId)` calls work with string UUID
 
 ---
 
@@ -121,11 +121,11 @@
 
 **Purpose**: Add role-based access control to admin gallery page using `profiles`/`roles` tables, a new `userStore`, and route middleware
 
-- [ ] T119 [P] Add `Profile` and `Role` TypeScript types to `shared/types/index.d.ts` or a new auth types file — `Profile: { id: string; userId: string; roleId: string }`, `Role: { id: string; created_at: string }`; ensure Supabase `database.types.ts` includes `profiles` and `roles` table types (run `npx supabase gen types` or add manually)
-- [ ] T120 Create `app/stores/userStore.ts` — Pinia setup store with: `role: ref<string | null>(null)`, `isAdmin: computed(() => role.value === 'admin')`, `fetchRole()` action that queries `profiles` table via `useSupabaseClient().from('profiles').select('roleId').eq('userId', user.id).single()` and sets `role.value`, `clearRole()` action that resets role to null
-- [ ] T121 Create `app/middleware/auth.ts` — Nuxt route middleware that reads `userStore.role`; if `role` is `null`/`undefined`, redirect to `/login` via `navigateTo('/login')`; if `role` is not `'admin'`, redirect to `/` with toast `'您無此頁面權限, 即將為您導回首頁'` via `useToast()` and `navigateTo('/')`
-- [ ] T106 [US4] Update `app/pages/admin/gallery.vue` — add `definePageMeta({ middleware: 'auth' })` to activate the auth middleware; remove any inline role-check logic that duplicates the middleware's responsibility
-- [ ] T122 [P] Update `app/pages/login.vue` — after successful Supabase login, call `userStore.fetchRole()` to cache the user's role from the `profiles` table; on logout, call `userStore.clearRole()` to reset cached role state
+- [X] T119 [P] Add `Profile` and `Role` TypeScript types to `shared/types/index.d.ts` or a new auth types file — `Profile: { id: string; userId: string; roleId: string }`, `Role: { id: string; created_at: string }`; ensure Supabase `database.types.ts` includes `profiles` and `roles` table types (run `npx supabase gen types` or add manually)
+- [X] T120 Create `app/stores/userStore.ts` — Pinia setup store with: `role: ref<string | null>(null)`, `isAdmin: computed(() => role.value === 'admin')`, `fetchRole()` action that queries `profiles` table via `useSupabaseClient().from('profiles').select('roleId').eq('userId', user.id).single()` and sets `role.value`, `clearRole()` action that resets role to null
+- [X] T121 Create `app/middleware/auth.ts` — Nuxt route middleware that reads `userStore.role`; if `role` is `null`/`undefined`, redirect to `/login` via `navigateTo('/login')`; if `role` is not `'admin'`, redirect to `/` with toast `'您無此頁面權限, 即將為您導回首頁'` via `useToast()` and `navigateTo('/')`
+- [X] T106 [US4] Update `app/pages/admin/gallery.vue` — add `definePageMeta({ middleware: 'auth' })` to activate the auth middleware; remove any inline role-check logic that duplicates the middleware's responsibility
+- [X] T122 [P] Update `app/pages/login.vue` — after successful Supabase login, call `userStore.fetchRole()` to cache the user's role from the `profiles` table; on logout, call `userStore.clearRole()` to reset cached role state
 
 ---
 
@@ -133,7 +133,7 @@
 
 **Purpose**: Fix UBlogPost prop usage and image fallback
 
-- [ ] T107 [US1] Update `app/pages/gallery.vue` UBlogPost rendering — remove `description` prop (do NOT bind `prompt` to description), remove `date` prop (do NOT bind `created_at` to date); only use `title` and `image` props per R-002; add an `@error` handler on the image element so that when `image_url` fails to load, the fallback text `'尚未設定圖片'` is displayed (e.g., set a reactive `imageError` flag per item, conditionally render text when the flag is true); when `item.image_url` is empty/null/undefined, show the fallback text directly without attempting to load
+- [X] T107 [US1] Update `app/pages/gallery.vue` UBlogPost rendering — remove `description` prop (do NOT bind `prompt` to description), remove `date` prop (do NOT bind `created_at` to date); only use `title` and `image` props per R-002; add an `@error` handler on the image element so that when `image_url` fails to load, the fallback text `'尚未設定圖片'` is displayed (e.g., set a reactive `imageError` flag per item, conditionally render text when the flag is true); when `item.image_url` is empty/null/undefined, show the fallback text directly without attempting to load
 
 ---
 
@@ -141,7 +141,7 @@
 
 **Purpose**: Fix image fallback in detail modal
 
-- [ ] T108 [US2] Update `app/components/GalleryDetail.vue` image display — use `<img :src="item.image_url" @error="onImageError">` with an error handler that sets a reactive flag; when the flag is true OR when `item.image_url` is empty/null, render styled text `'尚未設定圖片'` instead of the image; ensure no reference to `placeholder.png` remains
+- [X] T108 [US2] Update `app/components/GalleryDetail.vue` image display — use `<img :src="item.image_url" @error="onImageError">` with an error handler that sets a reactive flag; when the flag is true OR when `item.image_url` is empty/null, render styled text `'尚未設定圖片'` instead of the image; ensure no reference to `placeholder.png` remains
 
 ---
 
@@ -149,7 +149,7 @@
 
 **Purpose**: Make gallery card footer buttons icon-only with correct variant/color
 
-- [ ] T109 [US3] Update footer buttons in `app/pages/gallery.vue` `#footer` slot — for ALL buttons in the footer (copy prompt button, detail/view button): remove `label` prop (icon-only), set `variant="outline"`, set `color="neutral"` per R-009; ensure `@click.stop` is preserved to prevent event bubbling to card click
+- [X] T109 [US3] Update footer buttons in `app/pages/gallery.vue` `#footer` slot — for ALL buttons in the footer (copy prompt button, detail/view button): remove `label` prop (icon-only), set `variant="outline"`, set `color="neutral"` per R-009; ensure `@click.stop` is preserved to prevent event bubbling to card click
 
 ---
 
@@ -157,9 +157,9 @@
 
 **Purpose**: Fix admin table image fallback, USwitch behavior, and action button styling
 
-- [ ] T110 [US4] Update admin table `isActive` column in `app/pages/admin/gallery.vue` — verify `USwitch` has `disabled: true` prop (display-only, no inline toggle); remove any `onUpdate:modelValue` handler or `toggleActive()` wiring from the table USwitch; status toggling is done ONLY through the edit form's USwitch (not from the table row); verify that the edit form's USwitch for isActive still triggers a confirmation dialog when toggling to inactive (per US4-AC2)
-- [ ] T111 [P] [US4] Update admin table image column in `app/pages/admin/gallery.vue` — replace `placeholder.png` fallback or `@error` handler in the `h()` render function with a ternary: if `row.original.image_url` exists render `h('img', ...)`, else render `h('span', { ... }, '尚未設定圖片')`
-- [ ] T112 [P] [US4] Update admin table action buttons in `app/pages/admin/gallery.vue` — edit button: `color="neutral"`, `variant="outline"`, icon (e.g., `i-lucide-pencil`), **no label** (icon-only); delete button: `color="error"`, `variant="outline"`, icon (e.g., `i-lucide-trash-2`), **no label** (icon-only); per R-003 and R-009
+- [X] T110 [US4] Update admin table `isActive` column in `app/pages/admin/gallery.vue` — verify `USwitch` has `disabled: true` prop (display-only, no inline toggle); remove any `onUpdate:modelValue` handler or `toggleActive()` wiring from the table USwitch; status toggling is done ONLY through the edit form's USwitch (not from the table row); verify that the edit form's USwitch for isActive still triggers a confirmation dialog when toggling to inactive (per US4-AC2)
+- [X] T111 [P] [US4] Update admin table image column in `app/pages/admin/gallery.vue` — replace `placeholder.png` fallback or `@error` handler in the `h()` render function with a ternary: if `row.original.image_url` exists render `h('img', ...)`, else render `h('span', { ... }, '尚未設定圖片')`
+- [X] T112 [P] [US4] Update admin table action buttons in `app/pages/admin/gallery.vue` — edit button: `color="neutral"`, `variant="outline"`, icon (e.g., `i-lucide-pencil`), **no label** (icon-only); delete button: `color="error"`, `variant="outline"`, icon (e.g., `i-lucide-trash-2`), **no label** (icon-only); per R-003 and R-009
 
 ---
 
@@ -167,7 +167,7 @@
 
 **Purpose**: Restrict file upload to `.webp` format and 2MB max size
 
-- [ ] T113 [US5] Update `app/components/GalleryForm.vue` file upload — change `accept` from `"image/*"` to `"image/webp"` (`.webp` only); change max file size validation from 5MB to 2MB (`2 * 1024 * 1024` bytes); update any user-facing validation error message to `'.webp 格式，最大 2MB'`; per R-006 and supabase-storage contract
+- [X] T113 [US5] Update `app/components/GalleryForm.vue` file upload — change `accept` from `"image/*"` to `"image/webp"` (`.webp` only); change max file size validation from 5MB to 2MB (`2 * 1024 * 1024` bytes); update any user-facing validation error message to `'.webp 格式，最大 2MB'`; per R-006 and supabase-storage contract
 
 ---
 
@@ -175,7 +175,7 @@
 
 **Purpose**: Remove stale assets that are no longer referenced
 
-- [ ] T114 Delete `public/placeholder.png` if it exists — all image fallbacks now use text rendering `'尚未設定圖片'`; no code should reference this file after corrections above
+- [X] T114 Delete `public/placeholder.png` if it exists — all image fallbacks now use text rendering `'尚未設定圖片'`; no code should reference this file after corrections above
 
 ---
 
@@ -183,10 +183,10 @@
 
 **Purpose**: Verify all corrections are type-safe and constitution-compliant
 
-- [ ] T115 Run `npx nuxi typecheck` — verify zero TypeScript errors across all modified files; fix any errors introduced by the `id: number → string` type migration
-- [ ] T116 [P] Verify SFC block order in all `.vue` files — must be `<template>` → `<script setup lang="ts">` → `<style scoped>` per Constitution VI
-- [ ] T117 Grep verification — confirm zero remaining references to `placeholder.png` across entire codebase (`grep -r "placeholder" app/ shared/`); confirm zero remaining `id: number` in type definitions (`grep -r "id.*number" shared/types/`)
-- [ ] T118 Run quickstart.md compliance checklist — brownfield preservation ✅, dependency lock ✅, UI-first ✅, TypeScript strict ✅, auto-imports ✅, component standards ✅, Pinia setup stores ✅, no test files ✅
+- [X] T115 Run `npx nuxi typecheck` — verify zero TypeScript errors across all modified files; fix any errors introduced by the `id: number → string` type migration
+- [X] T116 [P] Verify SFC block order in all `.vue` files — must be `<template>` → `<script setup lang="ts">` → `<style scoped>` per Constitution VI
+- [X] T117 Grep verification — confirm zero remaining references to `placeholder.png` across entire codebase (`grep -r "placeholder" app/ shared/`); confirm zero remaining `id: number` in type definitions (`grep -r "id.*number" shared/types/`)
+- [X] T118 Run quickstart.md compliance checklist — brownfield preservation ✅, dependency lock ✅, UI-first ✅, TypeScript strict ✅, auto-imports ✅, component standards ✅, Pinia setup stores ✅, no test files ✅
 
 ---
 

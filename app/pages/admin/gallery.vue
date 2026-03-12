@@ -93,6 +93,8 @@
 <script setup lang="ts">
 import type { ColumnDef } from '@tanstack/vue-table'
 
+definePageMeta({ middleware: 'auth' })
+
 const {
   allItems,
   pending,
@@ -116,11 +118,11 @@ onMounted(() => {
 })
 
 // ── Toggle with deactivation confirmation ──
-const togglingId = ref<number | null>(null)
+const togglingId = ref<string | null>(null)
 const deactivateModalOpen = ref(false)
-const pendingDeactivateId = ref<number | null>(null)
+const pendingDeactivateId = ref<string | null>(null)
 
-function handleToggle(itemId: number, newValue: boolean) {
+function handleToggle(itemId: string, newValue: boolean) {
   if (!newValue) {
     pendingDeactivateId.value = itemId
     deactivateModalOpen.value = true
@@ -221,14 +223,13 @@ const columns: ColumnDef<GalleryItem>[] = [
   {
     accessorKey: 'image_url',
     header: '圖片',
-    cell: ({ row }) => h('img', {
-      src: row.original.image_url,
-      class: 'w-16 h-16 object-cover rounded',
-      loading: 'lazy',
-      onError: (e: Event) => {
-        (e.target as HTMLImageElement).src = '/placeholder.png'
-      },
-    }),
+    cell: ({ row }) => row.original.image_url
+      ? h('img', {
+          src: row.original.image_url,
+          class: 'w-16 h-16 object-cover rounded',
+          loading: 'lazy',
+        })
+      : h('span', { class: 'text-sm text-(--ui-text-muted)' }, '尚未設定圖片'),
   },
   {
     accessorKey: 'title',
@@ -259,10 +260,8 @@ const columns: ColumnDef<GalleryItem>[] = [
     accessorKey: 'isActive',
     header: '啟用',
     cell: ({ row }) => h(resolveComponent('USwitch'), {
-      'modelValue': row.original.isActive,
-      'loading': togglingId.value === row.original.id,
-      'onUpdate:modelValue': (val: boolean) => handleToggle(row.original.id, val),
-      'disabled': true
+      modelValue: row.original.isActive,
+      disabled: true,
     }),
   },
   {
@@ -279,15 +278,16 @@ const columns: ColumnDef<GalleryItem>[] = [
     header: '操作',
     cell: ({ row }) => h('div', { class: 'flex gap-2' }, [
       h(UButton, {
-        label: '編輯',
-        variant: 'ghost',
+        icon: 'i-lucide-pencil',
+        color: 'neutral',
+        variant: 'outline',
         size: 'xs',
         onClick: () => openEdit(row.original),
       }),
       h(resolveComponent('UButton'), {
-        label: '刪除',
+        icon: 'i-lucide-trash-2',
         color: 'error',
-        variant: 'ghost',
+        variant: 'outline',
         size: 'xs',
         onClick: () => confirmDeletePrompt(row.original),
       }),

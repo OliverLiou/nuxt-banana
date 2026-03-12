@@ -12,7 +12,7 @@
             :src="formState.image_url"
             alt="預覽"
             class="h-40 w-full rounded-lg object-cover"
-            @error="(e: Event) => (e.target as HTMLImageElement).src = '/placeholder.png'"
+            @error="(e: Event) => (e.target as HTMLImageElement).style.display = 'none'"
           >
           <UButton
             label="重新上傳"
@@ -24,7 +24,7 @@
           <input
             ref="fileInputRef"
             type="file"
-            accept="image/*"
+            accept="image/webp"
             class="hidden"
             @change="onFileChange"
           >
@@ -34,7 +34,7 @@
         <input
           ref="fileInputRef"
           type="file"
-          accept="image/*"
+          accept="image/webp"
           class="block w-full text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20"
           @change="onFileChange"
         >
@@ -152,8 +152,8 @@ function onFileChange(e: Event) {
   const input = e.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
-  if (file.size > 5 * 1024 * 1024) {
-    toast.add({ title: '檔案大小不得超過 5MB', color: 'error' })
+  if (file.size > 2 * 1024 * 1024) {
+    toast.add({ title: '.webp 格式，最大 2MB', color: 'error' })
     return
   }
   formState.upload_image = file

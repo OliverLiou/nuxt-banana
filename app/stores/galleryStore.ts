@@ -17,7 +17,7 @@ export const useGalleryStore = defineStore('gallery', () => {
 
   // ── Form / Slideover State ──
   const slideoverOpen = ref(false)
-  const editingId = ref<number | null>(null)
+  const editingId = ref<string | null>(null)
   const formState = ref<GalleryFormState>(getDefaultFormState())
 
   // ── Getters ──
@@ -76,7 +76,7 @@ export const useGalleryStore = defineStore('gallery', () => {
     if (idx !== -1) allItems.value[idx] = updated
   }
 
-  function removeItem(id: number) {
+  function removeItem(id: string) {
     allItems.value = allItems.value.filter(i => i.id !== id)
   }
 

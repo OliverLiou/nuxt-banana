@@ -114,7 +114,7 @@ export const useGalleryAdmin = () => {
   }
 
   // ── Toggle isActive ──
-  async function toggleActive(itemId: number, isActive: boolean) {
+  async function toggleActive(itemId: string, isActive: boolean) {
     const { error } = await supabase
       .from('gallery_items')
       .update({ isActive })
