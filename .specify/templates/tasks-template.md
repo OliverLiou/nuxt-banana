@@ -211,13 +211,13 @@ Examples of foundational tasks (adjust based on your project):
 ## Parallel Example: User Story 1
 
 ```bash
-# Launch all tests for User Story 1 together (if tests requested):
-Task: "Contract test for [endpoint] in tests/contract/test_[name].py"
-Task: "Integration test for [user journey] in tests/integration/test_[name].py"
+# Launch parallel tasks for User Story 1 (if applicable):
+Task: "Create [Feature]Card component in app/components/[Feature]Card.vue"
+Task: "Create [Feature]List component in app/components/[Feature]List.vue"
 
-# Launch all models for User Story 1 together:
-Task: "Create [Entity1] model in src/models/[entity1].py"
-Task: "Create [Entity2] model in src/models/[entity2].py"
+# Launch composable and store tasks together:
+Task: "Create use[Feature] composable in app/composables/use[Feature].ts"
+Task: "Create [feature] store in app/stores/[feature].ts"
 ```
 
 ---
@@ -263,4 +263,6 @@ With multiple developers:
 - End each story with diagnostics cleanup and brownfield-safe validation
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
+- Component files MUST use PascalCase naming (e.g., `GalleryCard.vue`)
+- Vue SFC block order: `<template>` → `<script setup lang="ts">` → `<style scoped>`
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence

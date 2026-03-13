@@ -44,6 +44,9 @@ contracts
 - [ ] TypeScript contract updates for props, emits, state, and API data are identified.
 - [ ] Validation covers final diagnostics review and explains whether automated tests are
       intentionally omitted or explicitly requested.
+- [ ] Component names follow PascalCase and Vue SFC block order is
+      `<template>` → `<script setup lang="ts">` → `<style scoped>`.
+- [ ] Duplicated logic is extracted into reusable composables or components.
 - [ ] No new packages or version-incompatible syntax are required.
 
 ## Project Structure

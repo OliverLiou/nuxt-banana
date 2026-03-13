@@ -17,6 +17,8 @@ Last updated: 2026-03-13
 - When agent-driven work implements `@nuxt/ui` components, use the `nuxt-ui` skill.
 
 ## Active Technologies
+- TypeScript 5.x, Nuxt 4.3+, Vue 3.5+ + `@nuxt/ui` ^4.4.0, `@nuxtjs/supabase` ^2.0.3, `@pinia/nuxt` ^0.11.3, TailwindCSS ^4.1.18 (dev)
+- Supabase/PostgreSQL (`gallery_items` 表) + Supabase Storage（圖片 .webp） (dev)
 
 - TypeScript 5.x, Nuxt 4.3.1, Vue 3.5.x
 - `@nuxt/ui` 4.4.0, `@nuxtjs/supabase` 2.0.3, `@pinia/nuxt` 0.11.3, TailwindCSS 4.1.18
@@ -67,6 +69,7 @@ specs/
 - Keep public-facing wording `published`/`labels` mapped to stored fields `isActive`/`badges`.
 
 ## Recent Changes
+- dev: Added TypeScript 5.x, Nuxt 4.3+, Vue 3.5+ + `@nuxt/ui` ^4.4.0, `@nuxtjs/supabase` ^2.0.3, `@pinia/nuxt` ^0.11.3, TailwindCSS ^4.1.18
 
 - 001-public-gallery-admin: Planned a public gallery, admin dashboard, and minimal auth/callback
   flow using Nuxt UI, Supabase, and Pinia within the existing brownfield structure.
