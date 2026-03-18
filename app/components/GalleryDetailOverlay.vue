@@ -16,13 +16,17 @@
 
         <div class="flex flex-col md:flex-row h-full">
           <!-- ===== Image area (70%) ===== -->
-          <div class="w-full md:w-[70%] h-1/2 md:h-full flex flex-col select-none">
+          <div class="w-full md:w-[70%] h-1/2 md:h-full flex flex-col select-none overflow-hidden">
             <UCarousel
               ref="carousel"
               :items="props.items"
               :start-index="currentIndex"
               :loop="true"
               :arrows="true"
+              :ui="{
+                prev: 'sm:start-4',
+                next: 'sm:end-4',
+              }"
               class="flex-1 min-h-0"
               @select="onSelect"
             >
