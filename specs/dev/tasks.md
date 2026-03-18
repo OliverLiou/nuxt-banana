@@ -32,26 +32,26 @@
 
 ## Phase 1 · Setup (3 tasks)
 
-- [ ] [T001] Review plan, brownfield boundary, and affected repository paths — cross-reference `specs/dev/plan.md`, `specs/dev/spec.md`, and `specs/dev/research.md` to confirm scope
-- [ ] [T002] [P] Inventory existing components, composables, and `@nuxt/ui` primitives to reuse per `specs/dev/research.md` — verify UBlogPost, UModal, UCarousel, UMarquee, UPageCTA, UBadge, UButton, UIcon availability
-- [ ] [T003] [P] Confirm validation approach — `npx nuxi prepare` + `npm run build` for build validation, manual validation per `specs/dev/quickstart.md`
+- [x] [T001] Review plan, brownfield boundary, and affected repository paths — cross-reference `specs/dev/plan.md`, `specs/dev/spec.md`, and `specs/dev/research.md` to confirm scope
+- [x] [T002] [P] Inventory existing components, composables, and `@nuxt/ui` primitives to reuse per `specs/dev/research.md` — verify UBlogPost, UModal, UCarousel, UMarquee, UPageCTA, UBadge, UButton, UIcon availability
+- [x] [T003] [P] Confirm validation approach — `npx nuxi prepare` + `npm run build` for build validation, manual validation per `specs/dev/quickstart.md`
 
 ---
 
 ## Phase 2 · Foundational (2 tasks)
 
-- [ ] [T004] Create `useGalleryItems` composable in `app/composables/useGalleryItems.ts` — import static items from `shared/utils/galleryItems.ts`, filter `isActive === true`, sort by `created_at` desc, return computed `activeItems`
-- [ ] [T005] Scaffold page composition in `app/pages/index.vue` — replace placeholder `<h1>` with component slots (`HeroSection`, `GalleryGrid`, `GalleryDetailOverlay`), manage shared state (`isOpen`, `selectedItem`, `activeItems` from `useGalleryItems`). Include browser history management: watch `isOpen` to push/pop `?item={id}` query param, listen to `popstate` to close overlay on back button
+- [x] [T004] Create `useGalleryItems` composable in `app/composables/useGalleryItems.ts` — import static items from `shared/utils/galleryItems.ts`, filter `isActive === true`, sort by `created_at` desc, return computed `activeItems`
+- [x] [T005] Scaffold page composition in `app/pages/index.vue` — replace placeholder `<h1>` with component slots (`HeroSection`, `GalleryGrid`, `GalleryDetailOverlay`), manage shared state (`isOpen`, `selectedItem`, `activeItems` from `useGalleryItems`). Include browser history management: watch `isOpen` to push/pop `?item={id}` query param, listen to `popstate` to close overlay on back button
 
 ---
 
 ## Phase 3 · US1 — Gallery Grid Browsing (P1) 🎯 MVP (5 tasks)
 
-- [ ] [T006] [P] [US1] Create `GalleryGrid.vue` in `app/components/GalleryGrid.vue` — responsive grid layout with `UBlogPost` cards (`:title`, `:image` with 4:3 aspect-ratio `object-cover`, `:date` formatted YYYY-MM-DD, `:badge` first badge, `#footer` slot with all `UBadge` v-for). Grid classes: `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4`. Emit `select` event with `GalleryItem` on card click
-- [ ] [T007] [US1] Implement infinite scroll in `app/components/GalleryGrid.vue` — reactive `displayCount` ref (initial batch size 6), sentinel `<div>` at bottom with native `IntersectionObserver`, increment `displayCount` on intersect, hide sentinel when all items displayed. Displayed items = `activeItems.slice(0, displayCount)`
-- [ ] [T008] [US1] Implement image skeleton/fallback in `app/components/GalleryGrid.vue` — use `<img>` `@load`/`@error` events, show skeleton/loading state while loading, swap to fallback placeholder on error (local `/images/placeholder.svg` or neutral gradient div)
-- [ ] [T009] [US1] Wire `GalleryGrid` into `app/pages/index.vue` — pass `activeItems` as prop or let component use `useGalleryItems` internally, connect `@select` event to set `selectedItem` and `isOpen` state
-- [ ] [T010] [US1] Run `npx nuxi prepare` and `npm run build` — fix any TypeScript errors or build warnings introduced by US1 tasks
+- [x] [T006] [P] [US1] Create `GalleryGrid.vue` in `app/components/GalleryGrid.vue` — responsive grid layout with `UBlogPost` cards (`:title`, `:image` with 4:3 aspect-ratio `object-cover`, `:date` formatted YYYY-MM-DD, `:badge` first badge, `#footer` slot with all `UBadge` v-for). Grid classes: `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4`. Emit `select` event with `GalleryItem` on card click
+- [x] [T007] [US1] Implement infinite scroll in `app/components/GalleryGrid.vue` — reactive `displayCount` ref (initial batch size 6), sentinel `<div>` at bottom with native `IntersectionObserver`, increment `displayCount` on intersect, hide sentinel when all items displayed. Displayed items = `activeItems.slice(0, displayCount)`
+- [x] [T008] [US1] Implement image skeleton/fallback in `app/components/GalleryGrid.vue` — use `<img>` `@load`/`@error` events, show skeleton/loading state while loading, swap to fallback placeholder on error (local `/images/placeholder.svg` or neutral gradient div)
+- [x] [T009] [US1] Wire `GalleryGrid` into `app/pages/index.vue` — pass `activeItems` as prop or let component use `useGalleryItems` internally, connect `@select` event to set `selectedItem` and `isOpen` state
+- [x] [T010] [US1] Run `npx nuxi prepare` and `npm run build` — fix any TypeScript errors or build warnings introduced by US1 tasks
 
 > **Checkpoint:** Gallery Grid is independently functional and testable.
 
@@ -59,11 +59,11 @@
 
 ## Phase 4 · US2 — Image Detail Overlay (P2) (5 tasks)
 
-- [ ] [T011] [P] [US2] Create `GalleryDetailOverlay.vue` in `app/components/GalleryDetailOverlay.vue` — fullscreen `UModal` (`v-model:open`, `fullscreen`, `dismissible`), `#content` slot layout: close `UButton` (absolute top-right, icon `i-lucide-x`, variant `ghost`), responsive flex layout (`flex-col md:flex-row`), left side carousel area (`w-full md:w-3/5`), right side metadata panel (`w-full md:w-2/5`). Props: `open` (boolean, v-model), `item` (`GalleryItem | null`), `items` (`GalleryItem[]`)
-- [ ] [T012] [US2] Implement `UCarousel` in `app/components/GalleryDetailOverlay.vue` — `items=props.items`, computed `startIndex` from `props.item.id`, `loop=true`, `autoplay={delay:3000}`, `arrows=true`. Listen to `@select` to update current displayed item (emit update event to parent). Implement manual thumbnail strip below carousel: `useTemplateRef('carousel')`, render up to 5 thumbnail imgs centered on current index, click calls `emblaApi.scrollTo(index)`, active thumbnail highlighted with `ring-2 ring-primary`
-- [ ] [T013] [US2] Implement text info panel in `app/components/GalleryDetailOverlay.vue` — `UInput` disabled for title, `UTextarea` disabled autoresize for prompt, `UInputDate` disabled for date (fallback to `UInput` with formatted date string if display inadequate), flex-wrap `gap-1` div with v-for `UBadge` (`label`, `color`, `variant` subtle)
-- [ ] [T014] [US2] Connect overlay to `app/pages/index.vue` — pass `isOpen` (`v-model:open`), `selectedItem` (`:item`), `activeItems` (`:items`) to `GalleryDetailOverlay`. Handle `@update:item` event to sync `selectedItem` when carousel navigates. Ensure browser history push/pop from Phase 2 works correctly with overlay open/close
-- [ ] [T015] [US2] Run `npx nuxi prepare` and `npm run build` — fix any TypeScript errors or build warnings introduced by US2 tasks
+- [x] [T011] [P] [US2] Create `GalleryDetailOverlay.vue` in `app/components/GalleryDetailOverlay.vue` — fullscreen `UModal` (`v-model:open`, `fullscreen`, `dismissible`), `#content` slot layout: close `UButton` (absolute top-right, icon `i-lucide-x`, variant `ghost`), responsive flex layout (`flex-col md:flex-row`), left side carousel area (`w-full md:w-3/5`), right side metadata panel (`w-full md:w-2/5`). Props: `open` (boolean, v-model), `item` (`GalleryItem | null`), `items` (`GalleryItem[]`)
+- [x] [T012] [US2] Implement `UCarousel` in `app/components/GalleryDetailOverlay.vue` — `items=props.items`, computed `startIndex` from `props.item.id`, `loop=true`, `autoplay={delay:3000}`, `arrows=true`. Listen to `@select` to update current displayed item (emit update event to parent). Implement manual thumbnail strip below carousel: `useTemplateRef('carousel')`, render up to 5 thumbnail imgs centered on current index, click calls `emblaApi.scrollTo(index)`, active thumbnail highlighted with `ring-2 ring-primary`
+- [x] [T013] [US2] Implement text info panel in `app/components/GalleryDetailOverlay.vue` — `UInput` disabled for title, `UTextarea` disabled autoresize for prompt, `UInputDate` disabled for date (fallback to `UInput` with formatted date string if display inadequate), flex-wrap `gap-1` div with v-for `UBadge` (`label`, `color`, `variant` subtle)
+- [x] [T014] [US2] Connect overlay to `app/pages/index.vue` — pass `isOpen` (`v-model:open`), `selectedItem` (`:item`), `activeItems` (`:items`) to `GalleryDetailOverlay`. Handle `@update:item` event to sync `selectedItem` when carousel navigates. Ensure browser history push/pop from Phase 2 works correctly with overlay open/close
+- [x] [T015] [US2] Run `npx nuxi prepare` and `npm run build` — fix any TypeScript errors or build warnings introduced by US2 tasks
 
 > **Checkpoint:** Detail Overlay opens from grid, carousel navigates, metadata displays, back button closes overlay.
 
@@ -71,9 +71,9 @@
 
 ## Phase 5 · US3 — Copy Prompt (P2) (3 tasks)
 
-- [ ] [T016] [US3] Add Copy Prompt button in `app/components/GalleryDetailOverlay.vue` — `UButton` with `label="複製 Prompt"`, `icon="i-lucide-copy"`, placed near prompt `UTextarea`. Implement `copyPrompt()` using native `navigator.clipboard.writeText()`. Reactive `copyLabel` ref changes to `"已複製！"` for 2 seconds on success via `setTimeout`
-- [ ] [T017] [US3] Implement clipboard fallback in `app/components/GalleryDetailOverlay.vue` — catch block for clipboard API failure (HTTP without secure context). Show error toast via `useToast()` or fallback to selecting text for manual copy
-- [ ] [T018] [US3] Run `npx nuxi prepare` and `npm run build` — fix any TypeScript errors or build warnings introduced by US3 tasks
+- [x] [T016] [US3] Add Copy Prompt button in `app/components/GalleryDetailOverlay.vue` — `UButton` with `label="複製 Prompt"`, `icon="i-lucide-copy"`, placed near prompt `UTextarea`. Implement `copyPrompt()` using native `navigator.clipboard.writeText()`. Reactive `copyLabel` ref changes to `"已複製！"` for 2 seconds on success via `setTimeout`
+- [x] [T017] [US3] Implement clipboard fallback in `app/components/GalleryDetailOverlay.vue` — catch block for clipboard API failure (HTTP without secure context). Show error toast via `useToast()` or fallback to selecting text for manual copy
+- [x] [T018] [US3] Run `npx nuxi prepare` and `npm run build` — fix any TypeScript errors or build warnings introduced by US3 tasks
 
 > **Checkpoint:** Copy button works, visual feedback shown, graceful fallback.
 
@@ -92,9 +92,9 @@
 
 ## Phase 7 · US5 — Empty State (P3) (3 tasks)
 
-- [ ] [T023] [US5] Add empty state UI in `app/components/GalleryGrid.vue` — `v-if="activeItems.length === 0"` block with `UIcon` (`i-lucide-image-off`, `size-16 text-neutral-400 mb-4`) and text `"目前尚無公開的展示作品"` (`text-lg text-neutral-500`). Centered layout with `flex-col items-center justify-center py-20`
-- [ ] [T024] [US5] Handle empty state in `app/components/HeroSection.vue` — ensure marquee gracefully renders nothing when `activeItems` is empty (no errors, no broken layout). Optionally hide marquee section entirely with `v-if`
-- [ ] [T025] [US5] Run `npx nuxi prepare` and `npm run build` — fix any TypeScript errors or build warnings introduced by US5 tasks
+- [x] [T023] [US5] Add empty state UI in `app/components/GalleryGrid.vue` — `v-if="activeItems.length === 0"` block with `UIcon` (`i-lucide-image-off`, `size-16 text-neutral-400 mb-4`) and text `"目前尚無公開的展示作品"` (`text-lg text-neutral-500`). Centered layout with `flex-col items-center justify-center py-20`
+- [x] [T024] [US5] Handle empty state in `app/components/HeroSection.vue` — ensure marquee gracefully renders nothing when `activeItems` is empty (no errors, no broken layout). Optionally hide marquee section entirely with `v-if`
+- [x] [T025] [US5] Run `npx nuxi prepare` and `npm run build` — fix any TypeScript errors or build warnings introduced by US5 tasks
 
 > **Checkpoint:** Empty state message shown when all items inactive, no layout errors.
 
@@ -102,10 +102,10 @@
 
 ## Phase 8 · Polish & Cross-Cutting (5 tasks)
 
-- [ ] [T026] [P] Verify responsive design across all breakpoints (320px, 768px, 1920px, 2560px) — check Hero orientation, grid columns, overlay layout per responsive design table in `specs/dev/plan.md`
-- [ ] [T027] [P] Verify edge cases from spec — zero badges renders clean, long prompt text handled, long title handled, broken image fallback works
-- [ ] [T028] Run `npx nuxi prepare` and `npm run build` — final clean build with zero errors
-- [ ] [T029] Verify no new packages added to `package.json` and no constitution exceptions introduced
+- [x] [T026] [P] Verify responsive design across all breakpoints (320px, 768px, 1920px, 2560px) — check Hero orientation, grid columns, overlay layout per responsive design table in `specs/dev/plan.md`
+- [x] [T027] [P] Verify edge cases from spec — zero badges renders clean, long prompt text handled, long title handled, broken image fallback works
+- [x] [T028] Run `npx nuxi prepare` and `npm run build` — final clean build with zero errors
+- [x] [T029] Verify no new packages added to `package.json` and no constitution exceptions introduced
 - [ ] [T030] Complete manual validation using all 8 scenarios in `specs/dev/quickstart.md`
 
 > **Checkpoint:** All user stories validated, clean build, manual QA complete.
