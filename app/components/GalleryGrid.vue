@@ -11,12 +11,13 @@
         :key="item.id"
         :title="item.title"
         :image="{ src: item.image_url, alt: item.title }"
-        :date="formatDate(item.created_at)"
-        :badge="item.badges[0]"
         class="cursor-pointer"
         @click="$emit('select', item)"
       >
-        <template #footer>
+        <template #date>
+          {{ formatDate(item.created_at) }}
+        </template>
+        <template #authors>
           <div class="flex flex-wrap gap-1">
             <UBadge
               v-for="(badge, idx) in item.badges"
@@ -24,7 +25,6 @@
               :label="badge.label"
               :color="badge.color"
               variant="subtle"
-              size="xs"
             />
           </div>
         </template>

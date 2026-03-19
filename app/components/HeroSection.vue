@@ -46,7 +46,8 @@
         <div>
           <UButton
             color="neutral"
-            variant="outline"
+            variant="solid"
+            trailing-icon="lucide:arrow-right"
             label="瀏覽更多"
             to="#gallery-grid"
           />
