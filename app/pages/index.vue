@@ -1,6 +1,7 @@
 <template>
   <div>
     <HeroSection />
+    <USeparator size="sm" />
     <GalleryGrid @select="openDetail" />
     <GalleryDetailOverlay
       v-model:open="isOpen"
